@@ -1,2 +1,2 @@
-from irctk.irc import Client
+from irctk.client import Client
 

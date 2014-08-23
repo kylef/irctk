@@ -33,7 +33,7 @@ class Client(TCPSocket):
         self.realname = realname
         self.password = password
 
-        self.is_authed = False
+        self.is_registered = False
         self.secure = False
         self.read_until_data = "\r\n"
         self.nick = self.nick_class(self)
@@ -114,7 +114,7 @@ class Client(TCPSocket):
 
     def socket_did_disconnect(self, err=None):
         super(Client, self).socket_did_disconnect(err)
-        self.is_authed = False
+        self.is_registered = False
 
     def quit(self, message='Disconnected'):
         self.send("QUIT", message)
@@ -139,7 +139,7 @@ class Client(TCPSocket):
         self.send_line(' '.join(args))
 
     def authenticate(self):
-        if not self.is_authed:
+        if not self.is_registered:
             self.send('CAP', 'LS')
 
             password = self.get_password()
@@ -174,7 +174,7 @@ class Client(TCPSocket):
             getattr(self, 'handle_%s' % command)(nick, args)
 
     def handle_1(self, server, nick, args):
-        self.is_authed = True
+        self.is_registered = True
         self.nick.nick = nick
 
         self.send('WHO', self.nick)
@@ -238,7 +238,7 @@ class Client(TCPSocket):
         if nick == '*':
             nick = self.get_nickname()
 
-        if not self.is_authed:
+        if not self.is_registered:
             self.send('NICK', self.get_alt_nickname(nick))
 
     def names_353_to_nick(self, nick):
