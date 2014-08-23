@@ -1,16 +1,10 @@
 import unittest
-from irctk.client import Client
+from irctk.tests.mock_client import MockClient as Client
 
 
 class ClientTests(unittest.TestCase):
     def setUp(self):
         self.client = Client('kylef', 'kyle', 'Kyle Fuller')
-        self.sent_lines = []
-
-        def send_line(line):
-            self.sent_lines.append(line)
-
-        self.client.send_line = send_line
 
     def test_client_has_nickname(self):
         self.assertEqual(self.client.nickname, 'kylef')
@@ -34,5 +28,5 @@ class ClientTests(unittest.TestCase):
 
     def test_client_sends_pong_when_pinged(self):
         self.client.read_data('PING :hello')
-        self.assertEqual(self.sent_lines, ['PONG hello'])
+        self.assertEqual(self.client.sent_lines, ['PONG hello'])
 
