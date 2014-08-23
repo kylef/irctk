@@ -49,6 +49,23 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.isupport.maximum_nick_length, 5)
         self.assertEqual(self.client.isupport.maximum_channel_length, 6)
 
+    def test_client_handles_joining_channel(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        self.assertEqual(channel.nicks, [self.client.nick])
+
+    def test_client_handles_parting_channel(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        self.client.read_data(':kylef!kyle@kyle PART #test :goodbye')
+        self.assertEqual(channel.nicks, [])
+
+    def test_client_handles_getting_kicked_from_channel(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        self.client.read_data(':kylef!kyle@kyle KICK #test kylef :goodbye')
+        self.assertEqual(channel.nicks, [])
+
     def test_client_handles_channel_new_mode(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kyle!kyle@kyle MODE #test +tn')

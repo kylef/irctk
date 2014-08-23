@@ -303,7 +303,7 @@ class Client(TCPSocket):
 
     def handle_part(self, nick, line):
         if ' :' in line:
-            chan, message = args.split(' :', 1)
+            chan, message = line.split(' :', 1)
         else:
             chan = line
             message = ''
