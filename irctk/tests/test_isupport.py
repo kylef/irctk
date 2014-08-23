@@ -37,3 +37,18 @@ class ISupportTests(unittest.TestCase):
     def test_is_channel_disallows_channels_exceeding_maximum_length(self):
         self.support['channellen'] = 5
         self.assertFalse(self.support.is_channel('#testing'))
+
+    # Test parsing
+
+    def test_can_parse_nicklen(self):
+        self.support.parse('NICKLEN=5')
+        self.assertEqual(self.support.maximum_nick_length, 5)
+
+    def test_can_parse_channellen(self):
+        self.support.parse('CHANNELLEN=10')
+        self.assertEqual(self.support.maximum_channel_length, 10)
+
+    def test_can_parse_prefix(self):
+        self.support.parse('PREFIX=(ohv)$%+')
+        self.assertEqual(self.support['prefix'], {'o': '$', 'h': '%', 'v': '+'})
+

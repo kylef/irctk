@@ -14,8 +14,6 @@ IRC_NAMES_REGEX = re.compile(r'^(@|=|\+) (\S+) :(.+)$')
 
 IRC_KICK_REGEX = re.compile(r'^(\S+) (\S+) :(.+)$')
 
-IRC_ISUPPORT_PREFIX = re.compile(r'^\((.+)\)(.+)$')
-
 
 class IRCIgnoreLine(Exception):
     pass

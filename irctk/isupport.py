@@ -1,4 +1,9 @@
+import re
+
+
 class ISupport(dict):
+    IRC_ISUPPORT_PREFIX = re.compile(r'^\((.+)\)(.+)$')
+
     def __init__(self):
         self['casemapping'] = 'rfc1459'
         self['chanmodes'] = {
@@ -48,9 +53,11 @@ class ISupport(dict):
                 self.parse_chanmodes(value)
             elif key == 'CHANTYPES':
                 self['chantypes'] = list(value)
+            elif key == 'CHANNELLEN' or key == 'NICKLEN':
+                self[key.lower()] = int(value)
 
     def parse_prefix(self, value):
-        m = IRC_ISUPPORT_PREFIX.match(value)
+        m = self.IRC_ISUPPORT_PREFIX.match(value)
         if m and len(m.group(1)) == len(m.group(2)):
             for x in range(0, len(m.group(1))):
                 self['prefix'][m.group(1)[x]] = m.group(2)[x]
