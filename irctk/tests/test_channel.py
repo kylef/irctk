@@ -11,3 +11,7 @@ class ChannelTests(unittest.TestCase):
 
     def test_channel_convertable_to_string(self):
         self.assertEqual(str(self.channel), '#testing')
+
+    def test_channel_repr(self):
+        self.assertEqual(repr(self.channel), '<Channel #testing>')
+

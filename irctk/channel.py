@@ -20,7 +20,7 @@ class Channel(object):
         return self.name
 
     def __repr__(self):
-        return '<Chan %s>' % self.name
+        return '<Channel %s>' % self.name
 
     def __in__(self, other):
         return other in self.nicks

@@ -24,3 +24,6 @@ class NickTests(unittest.TestCase):
     def test_conversion_to_string(self):
         self.assertEqual(str(self.nick), 'kylef')
 
+    def test_nick_repr(self):
+        self.assertEqual(repr(self.nick), '<Nick kylef!kyle@kylefuller.co.uk>')
+
