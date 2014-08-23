@@ -49,6 +49,37 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.isupport.maximum_nick_length, 5)
         self.assertEqual(self.client.isupport.maximum_channel_length, 6)
 
+    def test_client_handles_channel_new_mode(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +tn')
+        self.assertTrue(channel.modes['t'])
+        self.assertTrue(channel.modes['n'])
+
+    def test_client_handles_channel_remove_mode(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +tn')
+        self.client.read_data(':kyle!kyle@kyle MODE #test -tn')
+        self.assertEqual(channel.modes, {})
+
+    def test_client_handles_setting_channel_list_mode(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +b cake')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +b snake')
+        self.assertEqual(channel.modes['b'], ['cake', 'snake'])
+
+    def test_client_handles_removing_channel_list_mode(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +b cake')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +b snake')
+        self.client.read_data(':kyle!kyle@kyle MODE #test -b cake')
+        self.assertEqual(channel.modes['b'], ['snake'])
+
+    def test_client_handles_removing_channel_list_mode(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +l 5')
+        self.client.read_data(':kyle!kyle@kyle MODE #test +l 6')
+        self.assertEqual(channel.modes['l'], '6')
+
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):
