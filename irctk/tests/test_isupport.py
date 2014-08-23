@@ -65,3 +65,7 @@ class ISupportTests(unittest.TestCase):
             'h': None,
         })
 
+    def test_can_parse_chantypes(self):
+        self.support.parse('CHANTYPES=$^')
+        self.assertEqual(self.support['chantypes'], ['$', '^'])
+
