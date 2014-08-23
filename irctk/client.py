@@ -43,7 +43,7 @@ class Client(TCPSocket):
         self.cap_pending = []
 
         self.resolver = RegexResolver(
-            (r'^:(\S+) (\d{3}) ([\w*]+) (.+)$', self.handle_numerical),
+            (r'^:(\S+) (\d{3}) ([\w*]+) :(.+)$', self.handle_numerical),
             (r'^:(\S+) (\S+) (.+)$', self.handle_command),
             (r'^PING :?(.+)$', self.handle_ping)
         )

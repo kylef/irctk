@@ -30,3 +30,10 @@ class ClientTests(unittest.TestCase):
         self.client.read_data('PING :hello')
         self.assertEqual(self.client.sent_lines, ['PONG hello'])
 
+    # Handling
+
+    def test_client_handles_5_parsing_support(self):
+        self.client.read_data(':irc.kylefuller.co.uk 005 kyle :NICKLEN=5 CHANNELLEN=6')
+        self.assertEqual(self.client.isupport.maximum_nick_length, 5)
+        self.assertEqual(self.client.isupport.maximum_channel_length, 6)
+
