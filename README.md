@@ -1,6 +1,8 @@
 irctk
 =====
 
+[![Build Status](http://img.shields.io/travis/kylef/irctk/master.svg?style=flat)](https://travis-ci.org/kylef/irctk)
+
 An IRC client toolkit in Python.
 
 ## Installation
