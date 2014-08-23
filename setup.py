@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='irctk',
+    name='irc-toolkit',
     version='0.1.0',
     author='Kyle Fuller',
     author_email='inbox@kylefuller.co.uk',
