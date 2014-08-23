@@ -266,11 +266,7 @@ class Client(TCPSocket):
         if isinstance(channel, Channel):
             return True
 
-        for prefix in self.isupport['chantypes']:
-            if channel.startswith(prefix):
-                return True
-
-        return False
+        return self.isupport.is_channel(channel)
 
     def find_channel(self, name):
         for channel in self.channels:

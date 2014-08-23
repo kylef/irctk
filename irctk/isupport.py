@@ -86,3 +86,22 @@ class ISupport(dict):
     @property
     def channel_prefixes(self):
         return self['chantypes']
+
+    #
+
+    def is_channel(self, channel_name):
+        """
+        Returns True if supplied channel name is a valid channel name.
+        """
+        if ',' in channel_name or ' ' in channel_name:
+            return False
+
+        if len(channel_name) > self.maximum_channel_length:
+            return False
+
+        for prefix in self['chantypes']:
+            if channel_name.startswith(prefix):
+                return True
+
+        return False
+

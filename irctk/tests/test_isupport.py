@@ -19,3 +19,21 @@ class ISupportTests(unittest.TestCase):
     def test_default_user_channel_modes(self):
         self.assertEqual(self.support['prefix'], {'o': '@', 'v': '+'})
 
+    # Is channel
+
+    def test_is_channel_disallows_commas(self):
+        self.assertFalse(self.support.is_channel('#te,st'))
+
+    def test_is_channel_disallows_spaces(self):
+        self.assertFalse(self.support.is_channel('#te st'))
+
+    def test_is_channel_allows_channels_with_channel_prefix(self):
+        self.support['chantypes'] = ['$']
+        self.assertTrue(self.support.is_channel('$test'))
+
+    def test_is_channel_disallows_chanels_without_channel_prefix(self):
+        self.assertFalse(self.support.is_channel('$test'))
+
+    def test_is_channel_disallows_channels_exceeding_maximum_length(self):
+        self.support['channellen'] = 5
+        self.assertFalse(self.support.is_channel('#testing'))
