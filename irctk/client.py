@@ -119,7 +119,6 @@ class Client(TCPSocket):
         self.close()
 
     def send_line(self, line):
-        print "< " + line
         super(Client, self).send(line + "\r\n")
 
     def send(self, *args, **kwargs):
