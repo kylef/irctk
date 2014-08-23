@@ -52,3 +52,16 @@ class ISupportTests(unittest.TestCase):
         self.support.parse('PREFIX=(ohv)$%+')
         self.assertEqual(self.support['prefix'], {'o': '$', 'h': '%', 'v': '+'})
 
+    def test_can_parse_chanmodes(self):
+        self.support.parse('CHANMODES=ae,bf,cg,dh')
+        self.assertEqual(self.support['chanmodes'], {
+            'a': list,
+            'e': list,
+            'b': 'arg',
+            'f': 'arg',
+            'c': 'arg_set',
+            'g': 'arg_set',
+            'd': None,
+            'h': None,
+        })
+

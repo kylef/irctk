@@ -68,6 +68,8 @@ class ISupport(dict):
         except:
             return
 
+        self['chanmodes'] = {}
+
         for mode in list_args:
             self['chanmodes'][mode] = list
 
