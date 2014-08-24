@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from irctk.tests.mock_client import MockClient as Client
 from irctk.nick import Nick
@@ -102,6 +103,17 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kyle!kyle@kyle MODE #test +l 5')
         self.client.read_data(':kyle!kyle@kyle MODE #test +l 6')
         self.assertEqual(channel.modes['l'], '6')
+
+    def test_client_handles_332_topic(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':server 332 kylef #test :My Awesome Topic')
+        self.assertEqual(channel.topic, 'My Awesome Topic')
+
+    def test_client_handles_333_topic(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':server 333 kylef #test james!james@james 1395663680')
+        self.assertEqual(channel.topic_owner, 'james!james@james')
+        self.assertEqual(channel.topic_date, datetime.datetime(2014, 3, 24, 12, 21, 20))
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')
