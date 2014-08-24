@@ -255,9 +255,15 @@ class Client(TCPSocket):
     def names_353_to_nick(self, nick):
         for mode, prefix in self.isupport['prefix'].iteritems():
             if nick.startswith(prefix):
-                n = self.nick_class(self, nick=nick[len(mode):])
+                nickname = nick[len(mode):]
+                if '@' in nickname:
+                    n = self.nick_class.parse(self, nickname)
+                else:
+                    n = self.nick_class(self, nick=nickname)
                 n.add_perm(mode)
                 return n
+        if '@' in nick:
+            return self.nick_class.parse(self, nick)
         return self.nick_class(self, nick=nick)
 
     def handle_353(self, server, nick, args):

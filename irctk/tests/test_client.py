@@ -125,6 +125,15 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(channel.topic_owner, 'james!james@james')
         self.assertEqual(channel.topic_date, datetime.datetime(2014, 3, 24, 12, 21, 20))
 
+    def test_client_handles_353_names(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit')
+        self.assertEqual(len(channel.nicks), 3)
+        self.assertEqual(channel.nicks[0], Nick.parse(self.client, 'Derecho!der@der'))
+        self.assertEqual(channel.nicks[1], Nick.parse(self.client, 'Tempest!tmp@tmp'))
+        self.assertEqual(channel.nicks[2], Nick(self.client, nick='dijit'))
+        self.assertTrue(channel.nicks[1].has_perm('v'))
+
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kyle!kyle@kyle TOPIC #test :Hello World')
