@@ -104,6 +104,11 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kyle!kyle@kyle MODE #test +l 6')
         self.assertEqual(channel.modes['l'], '6')
 
+    def test_client_handles_324_mode(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':server 324 kylef #test +nt')
+        self.assertEqual(channel.modes, {'n': True, 't': True})
+
     def test_client_handles_329_creation_date(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':server 329 kylef #test 1358579621')
