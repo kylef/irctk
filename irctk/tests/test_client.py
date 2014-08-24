@@ -97,6 +97,12 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kyle!kyle@kyle MODE #test +l 6')
         self.assertEqual(channel.modes['l'], '6')
 
+    def test_client_updates_to_channel_topic(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle TOPIC #test :Hello World')
+        self.assertEqual(channel.topic, 'Hello World')
+        self.assertEqual(channel.topic_owner, 'kyle')
+
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):

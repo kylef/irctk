@@ -341,7 +341,7 @@ class Client(TCPSocket):
                 self.irc_channel_kick(nick, channel, message)
 
     def handle_topic(self, nick, line):
-        chan, topic = args.split(' ', 1)
+        chan, topic = line.split(' ', 1)
         if topic.startswith(':'):
             topic = topic[1:]
 
