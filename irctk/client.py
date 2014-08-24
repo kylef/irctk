@@ -253,7 +253,7 @@ class Client(TCPSocket):
             self.send('NICK', self.get_alt_nickname(nick))
 
     def names_353_to_nick(self, nick):
-        for mode, prefix in self.isupport['prefix'].iteritems():
+        for mode, prefix in self.isupport['prefix'].items():
             if nick.startswith(prefix):
                 nickname = nick[len(mode):]
                 if '@' in nickname:
