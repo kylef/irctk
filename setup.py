@@ -1,8 +1,11 @@
 from setuptools import setup
 
+with open('VERSION', 'r') as fp:
+    version = fp.read().strip()
+
 setup(
     name='irc-toolkit',
-    version='0.1.0',
+    version=version,
     author='Kyle Fuller',
     author_email='inbox@kylefuller.co.uk',
     packages=['irctk'],
