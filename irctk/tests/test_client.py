@@ -60,6 +60,12 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kylef!kyle@kyle PART #test :goodbye')
         self.assertEqual(channel.nicks, [])
 
+    def test_client_handles_parting_channel_without_reason(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        self.client.read_data(':kylef!kyle@kyle PART #test')
+        self.assertEqual(channel.nicks, [])
+
     def test_client_handles_getting_kicked_from_channel(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
