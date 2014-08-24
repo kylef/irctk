@@ -2,6 +2,7 @@ irc-toolkit
 ===========
 
 [![Build Status](http://img.shields.io/travis/kylef/irctk/master.svg?style=flat)](https://travis-ci.org/kylef/irctk)
+[![Test Coverage](http://img.shields.io/coveralls/kylef/irctk/master.svg?style=flat)]](https://coveralls.io/r/kylef/irctk)
 
 An IRC client toolkit in Python.
 
