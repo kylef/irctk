@@ -68,7 +68,7 @@ class Client(TCPSocket):
     # CAP
 
     def supports_cap(self, cap):
-        return cap in []
+        return cap in ['multi-prefix']
 
     # Channels
 

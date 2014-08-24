@@ -152,6 +152,16 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':barjavel.freenode.net CAP * LS :unknown-capability')
         self.assertEqual(self.client.sent_lines, ['CAP END'])
 
+    def test_client_requests_multi_prefix_capability(self):
+        self.client.socket_did_connect()
+        self.client.sent_lines = []  # reset, we dont care about auth stuff
+        self.client.read_data(':barjavel.freenode.net CAP * LS :multi-prefix')
+        self.assertEqual(self.client.sent_lines, ['CAP REQ multi-prefix'])
+        self.client.sent_lines = []
+        self.client.read_data(':barjavel.freenode.net CAP * ACK :multi-prefix')
+        self.assertEqual(self.client.sent_lines, ['CAP END'])
+        self.assertEqual(self.client.cap_accepted, ['multi-prefix'])
+
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):
