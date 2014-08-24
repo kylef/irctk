@@ -140,6 +140,18 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(channel.topic, 'Hello World')
         self.assertEqual(channel.topic_owner, 'kyle')
 
+    # Capabilities
+
+    def test_client_asks_for_server_capabilities_on_connection(self):
+        self.client.socket_did_connect()
+        self.assertEqual(self.client.sent_lines[0], 'CAP LS')
+
+    def test_client_ends_capabilities_negotiation_after_no_caps(self):
+        self.client.socket_did_connect()
+        self.client.sent_lines = []  # reset, we dont care about auth stuff
+        self.client.read_data(':barjavel.freenode.net CAP * LS :unknown-capability')
+        self.assertEqual(self.client.sent_lines, ['CAP END'])
+
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):
