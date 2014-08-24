@@ -29,10 +29,16 @@ class Nick(object):
         return str(other) == self.nick
 
     def send(self, message):
+        """
+        Sends a message to the nick.
+        """
         self.client.send('PRIVMSG', self, message, force=True)
 
     @property
     def channels(self):
+        """
+        Returns all the Channels that both the nick and the client has joined.
+        """
         return [channel for channel in self.client.channels if channel.has_nick(self)]
 
     # Channel

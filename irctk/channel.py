@@ -26,6 +26,9 @@ class Channel(object):
         return other in self.nicks
 
     def send(self, message):
+        """
+        Sends a message to the channel.
+        """
         self.client.send('PRIVMSG', self, message, force=True)
 
     def add_nick(self, nick):
@@ -116,5 +119,8 @@ class Channel(object):
         self.client.send('JOIN', self)
 
     def part(self):
+        """
+        Part the Channel.
+        """
         self.client.send('PART', self)
 

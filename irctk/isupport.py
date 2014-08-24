@@ -86,14 +86,38 @@ class ISupport(dict):
 
     @property
     def maximum_nick_length(self):
+        """
+        Returns the maximum length of a nickname.
+
+        Example::
+
+            >>> support.maximum_nick_length
+            9
+        """
         return self['nicklen']
 
     @property
     def maximum_channel_length(self):
+        """
+        Returns the maximum length of a channel name.
+
+        Example::
+
+            >>> support.maximum_channel_length
+            200
+        """
         return self['channellen']
 
     @property
     def channel_prefixes(self):
+        """
+        Returns a list of channel prefixes.
+
+        Example::
+
+            >>> support.channel_prefixes
+            ['#', '&']
+        """
         return self['chantypes']
 
     #
@@ -101,6 +125,14 @@ class ISupport(dict):
     def is_channel(self, channel_name):
         """
         Returns True if supplied channel name is a valid channel name.
+
+        Example::
+
+            >>> support.is_channel('#darkscience')
+            True
+
+            >>> support.is_channel('kylef')
+            False
         """
         if ',' in channel_name or ' ' in channel_name:
             return False

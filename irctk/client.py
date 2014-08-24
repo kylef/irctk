@@ -43,7 +43,7 @@ class Client(TCPSocket):
         self.cap_pending = []
 
         self.resolver = RegexResolver(
-            (r'^:(\S+) (\d{3}) ([\w*]+) :(.+)$', self.handle_numerical),
+            (r'^:(\S+) (\d{3}) ([\w*]+) :?(.+)$', self.handle_numerical),
             (r'^:(\S+) (\S+) (.+)$', self.handle_command),
             (r'^PING :?(.+)$', self.handle_ping)
         )
@@ -97,8 +97,11 @@ class Client(TCPSocket):
 
     # Socket
 
-    def connect(self, host, port, secure=False):
-        self.secure = secure
+    def connect(self, host, port, use_tls=False):
+        """
+        Connect the client to a server.
+        """
+        self.secure = use_tls
         super(Client, self).connect(host, port, timeout=10)
 
     def socket_did_connect(self):
@@ -115,10 +118,21 @@ class Client(TCPSocket):
         self.is_registered = False
 
     def quit(self, message='Disconnected'):
+        """
+        Disconnects from IRC and closes the connection. Accepts an optional
+        reason.
+        """
         self.send("QUIT", message)
         self.close()
 
     def send_line(self, line):
+        """
+        Sends a raw line to IRC
+
+        Example::
+
+            >>> client.send_line('PRIVMSG kylef :Hey!')
+        """
         super(Client, self).send(line + "\r\n")
 
     def send(self, *args, **kwargs):
