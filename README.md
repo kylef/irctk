@@ -22,7 +22,7 @@ class PingBot(object):
     def __init__(self):
         client = irctk.Client()
         client.delegate = self
-        client.connect('chat.freenode.net', 6697, secure=True)
+        client.connect('chat.freenode.net', 6697, use_tls=True)
 
     def irc_registered(self, client):
         channel = client.add_channel('#test')
