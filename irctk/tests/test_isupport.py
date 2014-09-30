@@ -69,3 +69,14 @@ class ISupportTests(unittest.TestCase):
         self.support.parse('CHANTYPES=$^')
         self.assertEqual(self.support['chantypes'], ['$', '^'])
 
+    # Test construction
+
+    def test_can_be_converted_to_string(self):
+        line = str(self.support)
+
+        new_support = ISupport()
+        new_support.clear()
+        new_support.parse(line)
+
+        self.assertEqual(new_support, self.support)
+
