@@ -14,7 +14,6 @@ setup(
     url='https://github.com/kylef/irctk/',
     license='BSD',
     description='A Python IRC client library',
-    long_description=open('README.md').read(),
     classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
