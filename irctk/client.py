@@ -1,7 +1,6 @@
 import re
 import datetime
-
-from zokket.tcp import TCPSocket
+import asyncio
 
 from irctk.routing import *
 from irctk.isupport import ISupport
@@ -19,7 +18,7 @@ class IRCIgnoreLine(Exception):
     pass
 
 
-class Client(TCPSocket):
+class Client:
     channel_class = Channel
     nick_class = Nick
 
@@ -31,6 +30,7 @@ class Client(TCPSocket):
         self.realname = realname
         self.password = password
 
+        self.is_connected = False
         self.is_registered = False
         self.secure = False
         self.read_until_data = "\r\n"
@@ -47,6 +47,26 @@ class Client(TCPSocket):
             (r'^:(\S+) (\S+) (.+)$', self.handle_command),
             (r'^PING :?(.+)$', self.handle_ping)
         )
+
+    async def connect(self, host, port, use_tls=False, loop=None):
+        self.secure = use_tls
+        connection = asyncio.open_connection(host, port, ssl=use_tls, loop=loop)
+        self.reader, self.writer = await connection
+
+        self.is_connected = True
+        self.authenticate()
+        await self.writer.drain()
+
+        while self.is_connected:
+            raw_message = await self.reader.readline()
+
+            if not raw_message:
+                self.is_registered = False
+                self.is_connected = False
+                self.writer.close()
+
+            self.read_data(raw_message.decode('utf-8'))
+            await self.writer.drain()
 
     # Variables
 
@@ -97,33 +117,13 @@ class Client(TCPSocket):
 
     # Socket
 
-    def connect(self, host, port, use_tls=False):
-        """
-        Connect the client to a server.
-        """
-        self.secure = use_tls
-        super(Client, self).connect(host, port, timeout=10)
-
-    def socket_did_connect(self):
-        if self.secure:
-            self.start_tls()
-        else:
-            self.authenticate()
-
-    def socket_did_secure(self):
-        self.authenticate()
-
-    def socket_did_disconnect(self, err=None):
-        super(Client, self).socket_did_disconnect(err)
-        self.is_registered = False
-
     def quit(self, message='Disconnected'):
         """
         Disconnects from IRC and closes the connection. Accepts an optional
         reason.
         """
         self.send("QUIT", message)
-        self.close()
+        self.writer.close()
 
     def send_line(self, line):
         """
@@ -133,7 +133,7 @@ class Client(TCPSocket):
 
             >>> client.send_line('PRIVMSG kylef :Hey!')
         """
-        super(Client, self).send(line + "\r\n")
+        self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
     def send(self, *args, **kwargs):
         force = kwargs.get('force', False)

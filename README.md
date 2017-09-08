@@ -15,14 +15,15 @@ $ pip install irc-toolkit
 ## Usage
 
 ```python
-import zokket
+import asyncio
 import irctk
 
-class PingBot(object):
-    def __init__(self):
+
+class Bot:
+    async def connect(self, hostname, port=6697, secure=True):
         client = irctk.Client()
         client.delegate = self
-        client.connect('chat.freenode.net', 6697, use_tls=True)
+        await client.connect(hostname, port, secure)
 
     def irc_registered(self, client):
         channel = client.add_channel('#test')
@@ -36,8 +37,12 @@ class PingBot(object):
         if message == 'ping':
             channel.send('{}: pong'.format(nick))
 
+
 if __name__ == '__main__':
-    bot = PingBot()
-    zokket.DefaultRunloop.run()
+    bot = Bot()
+
+    loop = asyncio.get_event_loop()
+    loop.create_task(bot.connect('chat.freenode.net'))
+    loop.run_forever()
 ```
 
