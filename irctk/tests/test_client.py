@@ -143,17 +143,17 @@ class ClientTests(unittest.TestCase):
     # Capabilities
 
     def test_client_asks_for_server_capabilities_on_connection(self):
-        self.client.socket_did_connect()
+        self.client.authenticate()
         self.assertEqual(self.client.sent_lines[0], 'CAP LS')
 
     def test_client_ends_capabilities_negotiation_after_no_caps(self):
-        self.client.socket_did_connect()
+        self.client.authenticate()
         self.client.sent_lines = []  # reset, we dont care about auth stuff
         self.client.read_data(':barjavel.freenode.net CAP * LS :unknown-capability')
         self.assertEqual(self.client.sent_lines, ['CAP END'])
 
     def test_client_requests_multi_prefix_capability(self):
-        self.client.socket_did_connect()
+        self.client.authenticate()
         self.client.sent_lines = []  # reset, we dont care about auth stuff
         self.client.read_data(':barjavel.freenode.net CAP * LS :multi-prefix')
         self.assertEqual(self.client.sent_lines, ['CAP REQ multi-prefix'])

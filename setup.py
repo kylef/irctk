@@ -10,7 +10,7 @@ setup(
     author_email='inbox@kylefuller.co.uk',
     packages=['irctk'],
     entry_points={},
-    install_requires=['zokket >= 1.2.1'],
+    install_requires=[],
     url='https://github.com/kylef/irctk/',
     license='BSD',
     description='A Python IRC client library',

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-import zokket
+import asyncio
 import irctk
 
 
-class Bot(object):
-    def __init__(self, hostname, port=6697, secure=True):
+class Bot:
+    async def connect(self, hostname, port=6697, secure=True):
         client = irctk.Client()
         client.delegate = self
-        client.connect(hostname, port, secure)
+        await client.connect(hostname, port, secure)
 
     def irc_registered(self, client):
         channel = client.add_channel('#test')
@@ -21,9 +21,13 @@ class Bot(object):
     def irc_channel_message(self, client, nick, channel, message):
         if message == 'ping':
             channel.send('{}: pong'.format(nick))
+        elif message == 'quit':
+            client.quit()
 
 
 if __name__ == '__main__':
-    bot = Bot('irc.darkscience.net')
-    zokket.DefaultRunloop.run()
+    bot = Bot()
 
+    loop = asyncio.get_event_loop()
+    loop.create_task(bot.connect('irc.darkscience.net'))
+    loop.run_forever()
