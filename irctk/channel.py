@@ -1,3 +1,6 @@
+from irctk.nick import Nick
+
+
 class Channel(object):
     def __init__(self, client, name):
         self.client = client

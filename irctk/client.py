@@ -1,5 +1,6 @@
 import re
 import datetime
+import string
 import asyncio
 
 from irctk.routing import *
@@ -90,6 +91,35 @@ class Client:
     def supports_cap(self, cap):
         return cap in ['multi-prefix']
 
+    # Support
+
+    def irc_equal(self, lhs, rhs):
+        """
+        Determine if two strings are IRC equal.
+        """
+
+        if self.isupport.case_mapping == 'rfc1459':
+            def lower(string):
+                return (string.lower()
+                    .replace('[', '{')
+                    .replace(']', '}')
+                    .replace('\\', '|'))
+        elif self.isupport.case_mapping == 'rfc1459-strict':
+            def lower(string):
+                return (string.lower()
+                    .replace('[', '{')
+                    .replace(']', '}')
+                    .replace('\\', '|')
+                    .replace('^', '~'))
+        elif self.isupport.case_mapping == 'ascii':
+            lower = string.lower
+        else:
+            # Unknown case mapping
+            lower = string.lower
+
+
+        return lower(lhs) == lower(rhs)
+
     # Channels
 
     def is_channel(self, channel):
@@ -100,7 +130,7 @@ class Client:
 
     def find_channel(self, name):
         for channel in self.channels:
-            if channel.name == name:
+            if self.irc_equal(channel.name, name):
                 return channel
 
     def add_channel(self, name, key=None):

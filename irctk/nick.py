@@ -26,7 +26,7 @@ class Nick(object):
         return '<Nick %s!%s@%s>' % (self.nick, self.ident, self.host)
 
     def __eq__(self, other):
-        return str(other) == self.nick
+        return self.client.irc_equal(str(other), self.nick)
 
     def send(self, message):
         """
