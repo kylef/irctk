@@ -19,6 +19,9 @@ class ISupportTests(unittest.TestCase):
     def test_default_user_channel_modes(self):
         self.assertEqual(self.support['prefix'], {'o': '@', 'v': '+'})
 
+    def test_default_case_mapping(self):
+        self.assertEqual(self.support.case_mapping, 'rfc1459')
+
     # Is channel
 
     def test_is_channel_disallows_commas(self):

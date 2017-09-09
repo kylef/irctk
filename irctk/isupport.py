@@ -171,6 +171,18 @@ class ISupport(dict):
         """
         return self['chantypes']
 
+    @property
+    def case_mapping(self):
+        """
+        Returns the case mapping.
+
+        Example::
+
+            >>> support.case_mapping
+            'rfc1459'
+        """
+        return self['casemapping']
+
     #
 
     def is_channel(self, channel_name):
