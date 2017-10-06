@@ -155,6 +155,18 @@ class Client:
         self.send("QUIT", message)
         self.writer.close()
 
+    def send_privmsg(self, target, message):
+        """
+        Sends a private message to a target.
+
+        Example::
+
+            >>> client.send_privmsg('kyle', 'Hi')
+            >>> client.send_privmsg(channel, 'Hi')
+        """
+
+        self.send_line('PRIVMSG {} :{}'.format(target, message))
+
     def send_line(self, line):
         """
         Sends a raw line to IRC

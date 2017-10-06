@@ -32,7 +32,7 @@ class Channel(object):
         """
         Sends a message to the channel.
         """
-        self.client.send('PRIVMSG', self, message, force=True)
+        self.client.send_privmsg(self, message)
 
     def add_nick(self, nick):
         if self.client.nick == nick:

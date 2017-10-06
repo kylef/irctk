@@ -169,3 +169,10 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.private_messages,
             [(self.client, Nick.parse(self.client, 'bob!b@irc.kylefuller.co.uk'), 'Hey')])
 
+    # Sending
+
+    def test_client_send_privmsg(self):
+        self.client.send_privmsg('kyle', 'Hello')
+        self.assertEqual(self.client.sent_lines, [
+            'PRIVMSG kyle :Hello'
+        ])

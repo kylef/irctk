@@ -32,7 +32,7 @@ class Nick(object):
         """
         Sends a message to the nick.
         """
-        self.client.send('PRIVMSG', self, message, force=True)
+        self.client.send_privmsg(self, message)
 
     @property
     def channels(self):
