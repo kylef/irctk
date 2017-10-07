@@ -1,6 +1,15 @@
 from irctk.nick import Nick
 
 
+class Membership(object):
+    """
+    Represents a nick membership inside a channnel.
+    """
+
+    def __init__(self, nick):
+        self.nick = nick
+
+
 class Channel(object):
     def __init__(self, client, name):
         self.client = client
@@ -17,7 +26,7 @@ class Channel(object):
         self.topic_date = None
         self.topic_owner = None
 
-        self.nicks = []
+        self.members = []
 
     def __str__(self):
         return self.name
@@ -26,7 +35,7 @@ class Channel(object):
         return '<Channel %s>' % self.name
 
     def __in__(self, other):
-        return other in self.nicks
+        return self.has_nick(other)
 
     def send(self, message):
         """
@@ -40,23 +49,28 @@ class Channel(object):
             self.client.send('MODE', self)
 
         if not self.has_nick(nick):
-            self.nicks.append(nick)
+            self.members.append(Membership(nick))
 
     def remove_nick(self, nickname):
-        nick = self.find_nick(nickname)
-        if nick:
-            self.nicks.remove(nick)
+        membership = self.find_membership(nickname)
+        if membership:
+            self.members.remove(membership)
 
-            if self.client.nick == nick:
+            if self.client.nick == membership.nick:
                 self.leave()
 
     def has_nick(self, nick):
         return bool(self.find_nick(nick))
 
+    def find_membership(self, nickname):
+        for membership in self.members:
+            if membership.nick.nick == nickname:
+                return membership
+
     def find_nick(self, nickname):
-        for nick in self.nicks:
-            if nick == nickname:
-                return nick
+        membership = self.find_membership(nickname)
+        if membership:
+            return membership.nick
 
     def mode_change(self, modes):
         add = True

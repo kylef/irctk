@@ -53,25 +53,25 @@ class ClientTests(unittest.TestCase):
     def test_client_handles_joining_channel(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
-        self.assertEqual(channel.nicks, [self.client.nick])
+        self.assertEqual(channel.members[0].nick, self.client.nick)
 
     def test_client_handles_parting_channel(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
         self.client.read_data(':kylef!kyle@kyle PART #test :goodbye')
-        self.assertEqual(channel.nicks, [])
+        self.assertEqual(channel.members, [])
 
     def test_client_handles_parting_channel_without_reason(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
         self.client.read_data(':kylef!kyle@kyle PART #test')
-        self.assertEqual(channel.nicks, [])
+        self.assertEqual(channel.members, [])
 
     def test_client_handles_getting_kicked_from_channel(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
         self.client.read_data(':kylef!kyle@kyle KICK #test kylef :goodbye')
-        self.assertEqual(channel.nicks, [])
+        self.assertEqual(channel.members, [])
 
     def test_client_handles_channel_new_mode(self):
         channel = self.client.add_channel('#test')
@@ -128,11 +128,11 @@ class ClientTests(unittest.TestCase):
     def test_client_handles_353_names(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit')
-        self.assertEqual(len(channel.nicks), 3)
-        self.assertEqual(channel.nicks[0], Nick.parse(self.client, 'Derecho!der@der'))
-        self.assertEqual(channel.nicks[1], Nick.parse(self.client, 'Tempest!tmp@tmp'))
-        self.assertEqual(channel.nicks[2], Nick(self.client, nick='dijit'))
-        self.assertTrue(channel.nicks[1].has_perm('v'))
+        self.assertEqual(len(channel.members), 3)
+        self.assertEqual(channel.members[0].nick, Nick.parse(self.client, 'Derecho!der@der'))
+        self.assertEqual(channel.members[1].nick, Nick.parse(self.client, 'Tempest!tmp@tmp'))
+        self.assertEqual(channel.members[2].nick, Nick(self.client, nick='dijit'))
+        self.assertTrue(channel.members[1].nick.has_perm('v'))
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')
