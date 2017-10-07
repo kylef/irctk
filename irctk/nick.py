@@ -17,8 +17,6 @@ class Nick(object):
         self.ident = ident
         self.host = host
 
-        self.channel_modes = []
-
     def __str__(self):
         return self.nick
 
@@ -40,18 +38,6 @@ class Nick(object):
         Returns all the Channels that both the nick and the client has joined.
         """
         return [channel for channel in self.client.channels if channel.has_nick(self)]
-
-    # Channel
-
-    def has_perm(self, perm):
-        return perm in self.channel_modes
-
-    def add_perm(self, perm):
-        if not self.has_perm(perm):
-            self.channel_modes.append(perm)
-
-    def remove_perm(self, perm):
-        self.channel_modes.remove(perm)
 
     def set_nick(self, nick):
         if self == self.client.nick:

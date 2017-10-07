@@ -6,7 +6,7 @@ import asyncio
 from irctk.routing import *
 from irctk.isupport import ISupport
 from irctk.nick import Nick
-from irctk.channel import Channel
+from irctk.channel import Channel, Membership
 
 IRC_CAP_REGEX = re.compile(r"^(\S+) (\S+) :(.+)$")
 IRC_PRIVMSG_REGEX = re.compile(r"^(\S+) :(.+)$")
@@ -294,7 +294,7 @@ class Client:
         if not self.is_registered:
             self.send('NICK', self.get_alt_nickname(nick))
 
-    def names_353_to_nick(self, nick):
+    def names_353_to_membership(self, nick):
         for mode, prefix in self.isupport['prefix'].items():
             if nick.startswith(prefix):
                 nickname = nick[len(mode):]
@@ -302,11 +302,10 @@ class Client:
                     n = self.nick_class.parse(self, nickname)
                 else:
                     n = self.nick_class(self, nick=nickname)
-                n.add_perm(mode)
-                return n
+                return Membership(n, [mode])
         if '@' in nick:
-            return self.nick_class.parse(self, nick)
-        return self.nick_class(self, nick=nick)
+            return Membership(self.nick_class.parse(self, nick))
+        return Membership(self.nick_class(self, nick=nick))
 
     def handle_353(self, server, nick, args):
         m = IRC_NAMES_REGEX.match(args)
@@ -316,8 +315,8 @@ class Client:
                 users = m.group(3)
 
                 for user in users.split():
-                    nick = self.names_353_to_nick(user)
-                    channel.add_nick(nick)
+                    membership = self.names_353_to_membership(user)
+                    channel.add_membership(membership)
 
     def handle_ping(self, line):
         self.send('PONG', line)

@@ -132,7 +132,7 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(channel.members[0].nick, Nick.parse(self.client, 'Derecho!der@der'))
         self.assertEqual(channel.members[1].nick, Nick.parse(self.client, 'Tempest!tmp@tmp'))
         self.assertEqual(channel.members[2].nick, Nick(self.client, nick='dijit'))
-        self.assertTrue(channel.members[1].nick.has_perm('v'))
+        self.assertTrue(channel.members[1].has_perm('v'))
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')

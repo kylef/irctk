@@ -6,8 +6,19 @@ class Membership(object):
     Represents a nick membership inside a channnel.
     """
 
-    def __init__(self, nick):
+    def __init__(self, nick, modes=None):
         self.nick = nick
+        self.modes = modes or []
+
+    def has_perm(self, perm):
+        return perm in self.modes
+
+    def add_perm(self, perm):
+        if not self.has_perm(perm):
+            self.modes.append(perm)
+
+    def remove_perm(self, perm):
+        self.modes.remove(perm)
 
 
 class Channel(object):
@@ -51,6 +62,14 @@ class Channel(object):
         if not self.has_nick(nick):
             self.members.append(Membership(nick))
 
+    def add_membership(self, membership):
+        if self.client.nick == membership.nick:
+            self.is_attached = True
+            self.client.send('MODE', self)
+
+        if not self.has_nick(membership.nick):
+            self.members.append(membership)
+
     def remove_nick(self, nickname):
         membership = self.find_membership(nickname)
         if membership:
@@ -88,12 +107,12 @@ class Channel(object):
             elif mode in self.client.isupport['prefix']:
                 # Its a permission mode (like op, voice etc)
 
-                nick = self.find_nick(args.pop(0))
-                if nick:
+                membership = self.find_member(args.pop(0))
+                if membership:
                     if add:
-                        nick.add_perm(mode)
+                        membership.add_perm(mode)
                     else:
-                        nick.remove_perm(mode)
+                        membership.remove_perm(mode)
 
             elif mode in self.client.isupport['chanmodes']:
                 args_type = self.client.isupport['chanmodes'][mode]
