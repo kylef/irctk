@@ -48,12 +48,6 @@ class Channel(object):
     def __in__(self, other):
         return self.has_nick(other)
 
-    def send(self, message):
-        """
-        Sends a message to the channel.
-        """
-        self.client.send_privmsg(self, message)
-
     def add_nick(self, nick):
         if self.client.nick == nick:
             self.is_attached = True
@@ -150,13 +144,3 @@ class Channel(object):
     def leave(self):
         self.is_attached = False
         self.nicks = []
-
-    def join(self):
-        self.client.send('JOIN', self)
-
-    def part(self):
-        """
-        Part the Channel.
-        """
-        self.client.send('PART', self)
-
