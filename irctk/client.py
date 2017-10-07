@@ -167,6 +167,27 @@ class Client:
 
         self.send_line('PRIVMSG {} :{}'.format(target, message))
 
+    def send_join(self, channel, key=None):
+        """
+        Sends a JOIN channel command.
+
+            >>> client.send_join('#palaver')
+        """
+
+        if key:
+            self.send_line('JOIN {} {}'.format(channel, key))
+        else:
+            self.send_line('JOIN {}'.format(channel))
+
+    def send_part(self, channel):
+        """
+        Sends a PART channel command.
+
+            >>> client.send_part('#palaver')
+        """
+
+        self.send_line('PART {}'.format(channel))
+
     def send_line(self, line):
         """
         Sends a raw line to IRC

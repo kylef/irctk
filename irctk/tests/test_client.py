@@ -176,3 +176,21 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.sent_lines, [
             'PRIVMSG kyle :Hello'
         ])
+
+    def test_client_send_join(self):
+        self.client.send_join('#palaver')
+        self.assertEqual(self.client.sent_lines, [
+            'JOIN #palaver'
+        ])
+
+    def test_client_send_join_with_key(self):
+        self.client.send_join('#palaver', 'secret')
+        self.assertEqual(self.client.sent_lines, [
+            'JOIN #palaver secret'
+        ])
+
+    def test_client_send_part(self):
+        self.client.send_part('#palaver')
+        self.assertEqual(self.client.sent_lines, [
+            'PART #palaver'
+        ])
