@@ -143,4 +143,4 @@ class Channel(object):
 
     def leave(self):
         self.is_attached = False
-        self.nicks = []
+        self.members = []
