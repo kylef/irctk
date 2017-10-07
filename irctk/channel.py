@@ -91,7 +91,7 @@ class Channel(object):
         if membership:
             return membership.nick
 
-    def mode_change(self, modes):
+    def mode_change(self, modes, isupport):
         add = True
         args = []
 
@@ -104,7 +104,7 @@ class Channel(object):
                 add = True
             elif mode == '-':
                 add = False
-            elif mode in self.client.isupport['prefix']:
+            elif mode in isupport['prefix']:
                 # Its a permission mode (like op, voice etc)
 
                 membership = self.find_member(args.pop(0))
@@ -114,8 +114,8 @@ class Channel(object):
                     else:
                         membership.remove_perm(mode)
 
-            elif mode in self.client.isupport['chanmodes']:
-                args_type = self.client.isupport['chanmodes'][mode]
+            elif mode in isupport['chanmodes']:
+                args_type = isupport['chanmodes'][mode]
 
                 if args_type == list:
                     if mode not in self.modes:

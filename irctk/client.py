@@ -242,7 +242,7 @@ class Client:
         channel = self.find_channel(channel_name)
         if channel:
             channel.modes = {}
-            channel.mode_change(mode_line)
+            channel.mode_change(mode_line, self.isupport)
 
     def handle_329(self, server, nick, args):
         channel_name, timestamp = args.split(' ', 1)
@@ -421,7 +421,7 @@ class Client:
             channel = self.find_channel(subject)
 
             if channel:
-                channel.mode_change(mode_line)
+                channel.mode_change(mode_line, self.isupport)
 
     def handle_quit(self, nick, reason):
         for channel in nick.channels:
