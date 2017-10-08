@@ -22,8 +22,7 @@ class Membership(object):
 
 
 class Channel(object):
-    def __init__(self, client, name):
-        self.client = client
+    def __init__(self, name):
         self.name = name
         self.modes = {}
 
@@ -47,30 +46,6 @@ class Channel(object):
 
     def __in__(self, other):
         return self.has_nick(other)
-
-    def add_nick(self, nick):
-        if self.client.nick == nick:
-            self.is_attached = True
-            self.client.send('MODE', self)
-
-        if not self.has_nick(nick):
-            self.members.append(Membership(nick))
-
-    def add_membership(self, membership):
-        if self.client.nick == membership.nick:
-            self.is_attached = True
-            self.client.send('MODE', self)
-
-        if not self.has_nick(membership.nick):
-            self.members.append(membership)
-
-    def remove_nick(self, nickname):
-        membership = self.find_membership(nickname)
-        if membership:
-            self.members.remove(membership)
-
-            if self.client.nick == membership.nick:
-                self.leave()
 
     def has_nick(self, nick):
         return bool(self.find_nick(nick))

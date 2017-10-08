@@ -137,7 +137,7 @@ class Client:
         channel = self.find_channel(name)
 
         if not channel:
-            channel = self.channel_class(self, name)
+            channel = self.channel_class(name)
             self.channels.append(channel)
 
         if key:
@@ -222,6 +222,26 @@ class Client:
 
             self.send('NICK', self.get_nickname())
             self.send('USER', self.get_ident(), '0', '*', self.get_realname(), force=True)
+
+    # Channel
+
+    def channel_add_nick(self, channel, nick):
+        self.channel_add_membership(channel, Membership(nick))
+
+    def channel_add_membership(self, channel, membership):
+        if not channel.has_nick(membership.nick):
+            if membership.nick == self.nick:
+                channel.is_active = True
+
+        channel.members.append(membership)
+
+    def channel_remove_nick(self, channel, nick):
+        membership = channel.find_membership(nick)
+        if membership:
+            channel.members.remove(membership)
+
+            if self.nick == membership.nick:
+                channel.leave()
 
     # Handle IRC lines
 
@@ -337,7 +357,7 @@ class Client:
 
                 for user in users.split():
                     membership = self.names_353_to_membership(user)
-                    channel.add_membership(membership)
+                    self.channel_add_membership(channel, membership)
 
     def handle_ping(self, line):
         self.send('PONG', line)
@@ -380,8 +400,7 @@ class Client:
 
         channel = self.find_channel(chan)
         if channel:
-            channel.add_nick(nick)
-            self.irc_channel_join(nick, channel)
+            self.channel_add_nick(channel, nick)
 
     def handle_part(self, nick, line):
         if ' :' in line:
@@ -392,7 +411,7 @@ class Client:
 
         channel = self.find_channel(chan)
         if channel:
-            channel.remove_nick(nick)
+            self.channel_remove_nick(channel, nick)
             self.irc_channel_part(nick, channel, message)
 
     def handle_kick(self, nick, line):
@@ -405,7 +424,7 @@ class Client:
 
             channel = self.find_channel(chan)
             if channel:
-                channel.remove_nick(kicked_nick)
+                self.channel_remove_nick(channel, kicked_nick)
                 self.irc_channel_kick(nick, channel, message)
 
     def handle_topic(self, nick, line):
@@ -447,7 +466,7 @@ class Client:
     def handle_quit(self, nick, reason):
         for channel in nick.channels:
             self.irc_channel_quit(nick, channel, reason)
-            channel.remove_nick(nick)
+            self.channel_remove_nick(channel, nick)
 
     # Delegation methods
 
