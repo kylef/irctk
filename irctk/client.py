@@ -441,7 +441,13 @@ class Client:
             self.irc_channel_topic(nick, channel)
 
     def handle_nick(self, nick, new_nick):
-        nick.set_nick(new_nick)
+        if self.irc_equal(self.nick.nick, nick.nick):
+            self.nick.nick = new_nick
+
+        for channel in self.channels:
+            for membership in channel.members:
+                if self.irc_equal(membership.nick.nick, nick.nick):
+                    membership.nick.nick = new_nick
 
     def handle_privmsg(self, nick, line):
         m = IRC_PRIVMSG_REGEX.match(line)

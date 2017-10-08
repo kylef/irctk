@@ -33,17 +33,6 @@ class Nick(object):
         """
         return [channel for channel in self.client.channels if channel.has_nick(self)]
 
-    def set_nick(self, nick):
-        if self == self.client.nick:
-            self.client.nick.nick = nick
-
-        for channel in self.client.channels:
-            n = channel.find_nick(self)
-            if n:
-                n.nick = nick
-
-        self.nick = nick
-
     def update(self):
         if self == self.client.nick:
             self.client.nick.ident = self.ident

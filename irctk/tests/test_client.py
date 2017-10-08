@@ -43,6 +43,18 @@ class ClientTests(unittest.TestCase):
         self.client.read_data('PING :hello')
         self.assertEqual(self.client.sent_lines, ['PONG hello'])
 
+    # Nick Change
+
+    def test_clients_handles_nick_change(self):
+        self.client.read_data(':irc.example.com 001 kyle :Welcome')
+        self.client.read_data(':kyle!kyle@cocode.org NICK kyle2')
+        self.assertEqual(self.client.nick.nick, 'kyle2')
+
+    def test_clients_handles_nick_change_case_insensitive(self):
+        self.client.read_data(':irc.example.com 001 kyle :Welcome')
+        self.client.read_data(':KYLE!kyle@cocode.org NICK kyle2')
+        self.assertEqual(self.client.nick.nick, 'kyle2')
+
     # Handling
 
     def test_client_handles_5_parsing_support(self):
@@ -139,6 +151,20 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kyle!kyle@kyle TOPIC #test :Hello World')
         self.assertEqual(channel.topic, 'Hello World')
         self.assertEqual(channel.topic_owner, 'kyle')
+
+    def test_client_updates_channel_membership_during_nick_change(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle JOIN #test')
+        self.client.read_data(':kyle!kyle@kyle NICK kyle2')
+
+        self.assertEqual(channel.members[0].nick.nick, 'kyle2')
+
+    def test_client_updates_channel_membership_during_nick_change_case_insensitive(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kyle!kyle@kyle JOIN #test')
+        self.client.read_data(':KYLE!kyle@kyle NICK kyle2')
+
+        self.assertEqual(channel.members[0].nick.nick, 'kyle2')
 
     # Capabilities
 
