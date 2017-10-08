@@ -50,6 +50,10 @@ class Client:
         )
 
     async def connect(self, host, port, use_tls=False, loop=None):
+        """
+        Connect to the IRC server
+        """
+
         self.secure = use_tls
         connection = asyncio.open_connection(host, port, ssl=use_tls, loop=loop)
         self.reader, self.writer = await connection
@@ -116,7 +120,6 @@ class Client:
         else:
             # Unknown case mapping
             lower = string.lower
-
 
         return lower(lhs) == lower(rhs)
 

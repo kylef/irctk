@@ -22,6 +22,10 @@ class Membership(object):
 
 
 class Channel(object):
+    """
+    Represents a channel
+    """
+
     def __init__(self, name):
         self.name = name
         self.modes = {}
@@ -39,6 +43,10 @@ class Channel(object):
         self.members = []
 
     def __str__(self):
+        """
+        Channel name
+        """
+
         return self.name
 
     def __repr__(self):
