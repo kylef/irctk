@@ -32,15 +32,3 @@ class Nick(object):
         Returns all the Channels that both the nick and the client has joined.
         """
         return [channel for channel in self.client.channels if channel.has_nick(self)]
-
-    def update(self):
-        if self == self.client.nick:
-            self.client.nick.ident = self.ident
-            self.client.nick.host = self.host
-
-        for channel in self.client.channels:
-            n = channel.find_nick(self)
-            if n:
-                n.ident = self.ident
-                n.host = self.host
-
