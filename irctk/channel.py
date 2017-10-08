@@ -44,22 +44,6 @@ class Channel(object):
     def __repr__(self):
         return '<Channel %s>' % self.name
 
-    def __in__(self, other):
-        return self.has_nick(other)
-
-    def has_nick(self, nick):
-        return bool(self.find_nick(nick))
-
-    def find_membership(self, nickname):
-        for membership in self.members:
-            if membership.nick.nick == nickname:
-                return membership
-
-    def find_nick(self, nickname):
-        membership = self.find_membership(nickname)
-        if membership:
-            return membership.nick
-
     def mode_change(self, modes, isupport):
         add = True
         args = []
