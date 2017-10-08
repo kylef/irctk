@@ -28,10 +28,3 @@ class NickTests(unittest.TestCase):
 
     def test_nick_repr(self):
         self.assertEqual(repr(self.nick), '<Nick kylef!kyle@kylefuller.co.uk>')
-
-    #
-
-    def test_send_message_to_nick(self):
-        self.nick.send('Hello World')
-        self.assertEqual(self.client.sent_lines, ['PRIVMSG kylef :Hello World'])
-

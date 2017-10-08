@@ -26,12 +26,6 @@ class Nick(object):
     def __eq__(self, other):
         return self.client.irc_equal(str(other), self.nick)
 
-    def send(self, message):
-        """
-        Sends a message to the nick.
-        """
-        self.client.send_privmsg(self, message)
-
     @property
     def channels(self):
         """
