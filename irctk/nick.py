@@ -5,14 +5,13 @@ class Nick(object):
     IRC_USERHOST_REGEX = re.compile(r'^(.*)!(.*)@(.*)$')
 
     @classmethod
-    def parse(cls, client, userhost):
+    def parse(cls, userhost):
         m = cls.IRC_USERHOST_REGEX.match(userhost)
         if m:
-            return cls(client, m.group(1), m.group(2), m.group(3))
-        return cls(client, host=userhost)
+            return cls(m.group(1), m.group(2), m.group(3))
+        return cls(host=userhost)
 
-    def __init__(self, client, nick='', ident='', host=''):
-        self.client = client
+    def __init__(self, nick='', ident='', host=''):
         self.nick = nick
         self.ident = ident
         self.host = host
@@ -24,11 +23,7 @@ class Nick(object):
         return '<Nick %s!%s@%s>' % (self.nick, self.ident, self.host)
 
     def __eq__(self, other):
-        return self.client.irc_equal(str(other), self.nick)
+        if not isinstance(other, Nick):
+            return False
 
-    @property
-    def channels(self):
-        """
-        Returns all the Channels that both the nick and the client has joined.
-        """
-        return [channel for channel in self.client.channels if channel.has_nick(self)]
+        return other.nick == self.nick and other.ident == self.ident and other.host == self.host

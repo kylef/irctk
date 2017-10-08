@@ -65,7 +65,7 @@ class ClientTests(unittest.TestCase):
     def test_client_handles_joining_channel(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
-        self.assertEqual(channel.members[0].nick, self.client.nick)
+        self.assertEqual(channel.members[0].nick.nick, self.client.nick.nick)
 
     def test_client_handles_parting_channel(self):
         channel = self.client.add_channel('#test')
@@ -141,16 +141,16 @@ class ClientTests(unittest.TestCase):
         channel = self.client.add_channel('#test')
         self.client.read_data(':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit')
         self.assertEqual(len(channel.members), 3)
-        self.assertEqual(channel.members[0].nick, Nick.parse(self.client, 'Derecho!der@der'))
-        self.assertEqual(channel.members[1].nick, Nick.parse(self.client, 'Tempest!tmp@tmp'))
-        self.assertEqual(channel.members[2].nick, Nick(self.client, nick='dijit'))
+        self.assertEqual(channel.members[0].nick, Nick.parse('Derecho!der@der'))
+        self.assertEqual(channel.members[1].nick, Nick.parse('Tempest!tmp@tmp'))
+        self.assertEqual(channel.members[2].nick, Nick(nick='dijit'))
         self.assertTrue(channel.members[1].has_perm('v'))
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kyle!kyle@kyle TOPIC #test :Hello World')
         self.assertEqual(channel.topic, 'Hello World')
-        self.assertEqual(channel.topic_owner, 'kyle')
+        self.assertEqual(channel.topic_owner.nick, 'kyle')
 
     def test_client_updates_channel_membership_during_nick_change(self):
         channel = self.client.add_channel('#test')
@@ -193,7 +193,7 @@ class ClientTests(unittest.TestCase):
     def test_client_forwards_private_messages_to_delegate(self):
         self.client.read_data(':bob!b@irc.kylefuller.co.uk PRIVMSG kylef :Hey')
         self.assertEqual(self.private_messages,
-            [(self.client, Nick.parse(self.client, 'bob!b@irc.kylefuller.co.uk'), 'Hey')])
+            [(self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')])
 
     # Sending
 

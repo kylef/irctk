@@ -35,7 +35,7 @@ class Client:
         self.is_registered = False
         self.secure = False
         self.read_until_data = "\r\n"
-        self.nick = self.nick_class(self)
+        self.nick = self.nick_class()
 
         self.channels = []
         self.isupport = ISupport()
@@ -229,19 +229,32 @@ class Client:
         self.channel_add_membership(channel, Membership(nick))
 
     def channel_add_membership(self, channel, membership):
-        if not channel.has_nick(membership.nick):
-            if membership.nick == self.nick:
-                channel.is_active = True
+        if self.channel_find_membership(channel, membership.nick):
+            return
+
+        if membership.nick == self.nick:
+            channel.is_active = True
 
         channel.members.append(membership)
 
     def channel_remove_nick(self, channel, nick):
-        membership = channel.find_membership(nick)
+        membership = self.channel_find_membership(channel, nick)
         if membership:
             channel.members.remove(membership)
 
             if self.nick == membership.nick:
                 channel.leave()
+
+    def channel_find_membership(self, channel, nick):
+        for membership in channel.members:
+            if self.irc_equal(membership.nick.nick, nick.nick):
+                return membership
+
+
+    def channel_find_nick(self, channel, nick):
+        membership = self.channel_find_membership(channel, nick)
+        if membership:
+            return membership.nick
 
     # Handle IRC lines
 
@@ -262,7 +275,7 @@ class Client:
 
     def handle_command(self, sender, command, args):
         command = command.lower()
-        nick = self.nick_class.parse(self, sender)
+        nick = self.nick_class.parse(sender)
 
         if hasattr(self, 'handle_%s' % command):
             getattr(self, 'handle_%s' % command)(nick, args)
@@ -340,13 +353,13 @@ class Client:
             if nick.startswith(prefix):
                 nickname = nick[len(mode):]
                 if '@' in nickname:
-                    n = self.nick_class.parse(self, nickname)
+                    n = self.nick_class.parse(nickname)
                 else:
-                    n = self.nick_class(self, nick=nickname)
+                    n = self.nick_class(nick=nickname)
                 return Membership(n, [mode])
         if '@' in nick:
-            return Membership(self.nick_class.parse(self, nick))
-        return Membership(self.nick_class(self, nick=nick))
+            return Membership(self.nick_class.parse(nick))
+        return Membership(self.nick_class(nick=nick))
 
     def handle_353(self, server, nick, args):
         m = IRC_NAMES_REGEX.match(args)
@@ -419,7 +432,7 @@ class Client:
         if m:
             chan = m.group(1)
             kicked_nick = m.group(2)
-            kicked_nick = self.nick_class(self, nick=kicked_nick)
+            kicked_nick = self.nick_class(nick=kicked_nick)
             message = m.group(3)
 
             channel = self.find_channel(chan)
@@ -458,7 +471,7 @@ class Client:
             else:
                 channel = self.find_channel(m.group(1))
                 if channel:
-                    self.irc_channel_message(channel.find_nick(nick), channel, message)
+                    self.irc_channel_message(channel.channel_find_nick(channel, nick.nick), channel, message)
 
     def handle_mode(self, nick, line):
         subject, mode_line = line.split(' ', 1)
