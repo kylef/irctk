@@ -248,9 +248,13 @@ class Client:
             if self.nick == membership.nick:
                 channel.leave()
 
+            return True
+
+        return False
+
     def channel_find_membership(self, channel, nick):
         for membership in channel.members:
-            if self.irc_equal(membership.nick.nick, nick.nick):
+            if self.irc_equal(membership.nick.nick, str(nick)):
                 return membership
 
 
@@ -415,6 +419,10 @@ class Client:
             chan = line
 
         channel = self.find_channel(chan)
+
+        if not channel and self.irc_equal(self.nick.nick, nick.nick):
+            channel = self.add_channel(chan)
+
         if channel:
             self.channel_add_nick(channel, nick)
 
@@ -474,7 +482,7 @@ class Client:
             else:
                 channel = self.find_channel(m.group(1))
                 if channel:
-                    self.irc_channel_message(channel.channel_find_nick(channel, nick.nick), channel, message)
+                    self.irc_channel_message(self.channel_find_nick(channel, nick.nick), channel, message)
 
     def handle_mode(self, nick, line):
         subject, mode_line = line.split(' ', 1)
@@ -486,9 +494,9 @@ class Client:
                 channel.mode_change(mode_line, self.isupport)
 
     def handle_quit(self, nick, reason):
-        for channel in nick.channels:
-            self.irc_channel_quit(nick, channel, reason)
-            self.channel_remove_nick(channel, nick)
+        for channel in self.channels:
+            if self.channel_remove_nick(channel, nick):
+                self.irc_channel_quit(nick, channel, reason)
 
     # Delegation methods
 

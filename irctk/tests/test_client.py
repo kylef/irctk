@@ -63,8 +63,8 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.isupport.maximum_channel_length, 6)
 
     def test_client_handles_joining_channel(self):
-        channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        channel = self.client.channels[0]
         self.assertEqual(channel.members[0].nick.nick, self.client.nick.nick)
 
     def test_client_handles_parting_channel(self):
