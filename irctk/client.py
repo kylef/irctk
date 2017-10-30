@@ -425,6 +425,7 @@ class Client:
 
         if channel:
             self.channel_add_nick(channel, nick)
+            self.irc_channel_join(nick, channel)
 
     def handle_part(self, nick, line):
         if ' :' in line:
