@@ -4,6 +4,12 @@ from typing import List
 class Message:
     @classmethod
     def parse(cls, string: str):
+        if string.startswith(':'):
+            prefix, string = string.split(' ', 1)
+            prefix = prefix[1:]
+        else:
+            prefix = None
+
         command, string = string.split(' ', 1)
         parameters = []
 
@@ -18,16 +24,23 @@ class Message:
                 parameters.append(string)
                 string = ''
 
-        return cls(command, parameters)
+        return cls(prefix, command, parameters)
 
-    def __init__(self, command: str, parameters: List[str] = None):
+    def __init__(self, prefix: str = None, command: str = '', parameters: List[str] = None):
+        self.prefix = prefix
         self.command = command
         self.parameters = parameters or []
 
     def __str__(self):
         string = ''
 
+        if self.prefix:
+            string += ':' + self.prefix
+
         if len(self.command) > 0:
+            if len(string) > 0:
+                string += ' '
+
             string += self.command
 
         if len(self.parameters) > 0:
