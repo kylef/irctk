@@ -7,6 +7,7 @@ from irctk.routing import *
 from irctk.isupport import ISupport
 from irctk.nick import Nick
 from irctk.channel import Channel, Membership
+from irctk.message import Message
 
 IRC_CAP_REGEX = re.compile(r"^(\S+) (\S+) :(.+)$")
 IRC_PRIVMSG_REGEX = re.compile(r"^(\S+) :(.+)$")
@@ -202,6 +203,10 @@ class Client:
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
     def send(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], Message):
+            self.send_line(str(args[0]))
+            return
+
         force = kwargs.get('force', False)
         args = [str(arg) for arg in args]
 

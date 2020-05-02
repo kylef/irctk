@@ -2,6 +2,7 @@ import datetime
 import unittest
 from irctk.tests.mock_client import MockClient as Client
 from irctk.nick import Nick
+from irctk.message import Message
 
 
 class ClientTests(unittest.TestCase):
@@ -196,6 +197,14 @@ class ClientTests(unittest.TestCase):
             [(self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')])
 
     # Sending
+
+    def test_client_send_message(self):
+        message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+        self.client.send(message)
+
+        self.assertEqual(self.client.sent_lines, [
+            'PRIVMSG kyle :Hello World'
+        ])
 
     def test_client_send_privmsg(self):
         self.client.send_privmsg('kyle', 'Hello')
