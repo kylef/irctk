@@ -2,6 +2,7 @@ import re
 import datetime
 import string
 import asyncio
+import logging
 
 from irctk.routing import *
 from irctk.isupport import ISupport
@@ -32,6 +33,8 @@ class Client:
     def __init__(self, nickname='irctk', ident='irctk', realname='irctk', password=None):
         super(Client, self).__init__()
 
+        self.logger = logging.getLogger(__name__)
+
         self.nickname = nickname
         self.ident = ident
         self.realname = realname
@@ -58,6 +61,8 @@ class Client:
         """
         Connect to the IRC server
         """
+
+        self.logger.info('Connecting to {}:{}'.format(host, port))
 
         self.secure = use_tls
         connection = asyncio.open_connection(host, port, ssl=use_tls, loop=loop)
@@ -210,6 +215,7 @@ class Client:
 
             >>> client.send_line('PRIVMSG kylef :Hey!')
         """
+        self.logger.debug('C: {}'.format(line))
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
     def send(self, *args, **kwargs):
@@ -282,6 +288,7 @@ class Client:
 
     def read_data(self, data):
         line = data.strip()
+        self.logger.debug('S: {}'.format(line))
 
         try:
             self.irc_raw(line)
@@ -537,6 +544,8 @@ class Client:
     # Delegation methods
 
     def irc_disconnected(self, error):
+        self.logger.info('Disconnected')
+
         if hasattr(self.delegate, 'irc_disconnected'):
             self.delegate.irc_disconnected(self, error)
 
