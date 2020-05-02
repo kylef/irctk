@@ -4,6 +4,18 @@ from typing import List
 class Message:
     @classmethod
     def parse(cls, string: str):
+        """
+        Parse an IRC line into a Message instance
+
+        >>> message = Message.parse(':doe!doe@example.com PRIVMSG #example :Hello World')
+        >>> message.prefix
+        'doe!doe@example.com'
+        >>> message.command
+        'PRIVMSG'
+        >>> message.parameters
+        ['#example', 'Hello World']
+        """
+
         if string.startswith(':'):
             prefix, string = string.split(' ', 1)
             prefix = prefix[1:]
@@ -32,6 +44,13 @@ class Message:
         self.parameters = parameters or []
 
     def __str__(self):
+        """
+        Converts a Message instance into a string
+
+        >>> message = Message(command='CAP', parameters=['LS'])
+        >>> str(message)
+        'CAP LS'
+        """
         string = ''
 
         if self.prefix:
