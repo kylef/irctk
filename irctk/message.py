@@ -1,6 +1,48 @@
 from typing import List
 
 
+class MessageTag:
+    @classmethod
+    def parse(cls, string: str):
+        if string.startswith('+'):
+            # FIXME support client tags
+            string = string[1:]
+
+        if '=' in string:
+            # FIXME support escaping
+            string, value = string.split('=', 1)
+        else:
+            value = None
+
+        if '/' in string:
+            vendor, string = string.split('/', 1)
+        else:
+            vendor = None
+
+        return cls(vendor=vendor, name=string, value=value)
+
+    def __init__(self, vendor: str=None, name: str=None, value: str=None):
+        self.vendor = vendor
+        self.name = name
+        self.value = value
+
+    def __str__(self):
+        tag = ''
+
+        # FIXMEif client_only prepend +
+
+        if self.vendor:
+            tag += self.vendor + '/'
+
+        tag += self.name
+
+        if self.value and len(self.value) > 0:
+            # FIXME escaping
+            tag += '=' + self.value
+
+        return tag
+
+
 class Message:
     @classmethod
     def parse(cls, string: str):
@@ -15,6 +57,12 @@ class Message:
         >>> message.parameters
         ['#example', 'Hello World']
         """
+
+        if string.startswith('@'):
+            tags, string = string[1:].split(' ', 1)
+            tags = list(map(MessageTag.parse, tags.split(';')))
+        else:
+            tags = []
 
         if string.startswith(':'):
             prefix, string = string.split(' ', 1)
@@ -36,9 +84,10 @@ class Message:
                 parameters.append(string)
                 string = ''
 
-        return cls(prefix, command, parameters)
+        return cls(tags, prefix, command, parameters)
 
-    def __init__(self, prefix: str = None, command: str = '', parameters: List[str] = None):
+    def __init__(self, tags: List[MessageTag] = None, prefix: str = None, command: str = '', parameters: List[str] = None):
+        self.tags = tags or []
         self.prefix = prefix
         self.command = command
         self.parameters = parameters or []
@@ -53,7 +102,13 @@ class Message:
         """
         string = ''
 
+        if len(self.tags) > 0:
+            string += '@' + ';'.join(map(str, self.tags))
+
         if self.prefix:
+            if len(string) > 0:
+                string += ' '
+
             string += ':' + self.prefix
 
         if len(self.command) > 0:

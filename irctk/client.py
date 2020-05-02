@@ -289,13 +289,20 @@ class Client:
             return
 
         message = Message.parse(line)
-        self.resolver(line)
 
         command = message.command.lower()
         if hasattr(self, 'handle_{}'.format(command)):
             func = getattr(self, 'handle_{}'.format(command))
             if hasattr(func, 'accepts_message'):
                 func(message)
+
+        # FIXME old method dispatching
+        string = line
+        # stripping tags from unsupported code paths
+        if string.startswith('@'):
+            _, string = string.split(' ', 1)
+
+        self.resolver(string)
 
     def handle_numerical(self, server, command, nick, args):
         numeric = int(command)
