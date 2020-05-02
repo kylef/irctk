@@ -61,7 +61,11 @@ class Client:
 
         self.secure = use_tls
         connection = asyncio.open_connection(host, port, ssl=use_tls, loop=loop)
-        self.reader, self.writer = await connection
+        try:
+            self.reader, self.writer = await connection
+        except Exception as exception:
+            self.irc_disconnected(exception)
+            return
 
         self.is_connected = True
         self.authenticate()
@@ -74,6 +78,8 @@ class Client:
                 self.is_registered = False
                 self.is_connected = False
                 self.writer.close()
+                self.irc_disconnected(None)
+                return
 
             self.read_data(raw_message.decode('utf-8'))
             await self.writer.drain()
@@ -521,6 +527,10 @@ class Client:
                 self.irc_channel_quit(nick, channel, reason)
 
     # Delegation methods
+
+    def irc_disconnected(self, error):
+        if hasattr(self.delegate, 'irc_disconnected'):
+            self.delegate.irc_disconnected(self, error)
 
     def irc_registered(self):
         if hasattr(self.delegate, 'irc_registered'):
