@@ -20,6 +20,11 @@ class IRCIgnoreLine(Exception):
     pass
 
 
+def accepts_message(func):
+    func.accepts_message = True
+    return func
+
+
 class Client:
     channel_class = Channel
     nick_class = Nick
@@ -280,8 +285,11 @@ class Client:
         message = Message.parse(line)
         self.resolver(line)
 
-        if message.command == 'PING':
-            self.handle_ping(message)
+        command = message.command.lower()
+        if hasattr(self, 'handle_{}'.format(command)):
+            func = getattr(self, 'handle_{}'.format(command))
+            if hasattr(func, 'accepts_message'):
+                func(message)
 
     def handle_numerical(self, server, command, nick, args):
         numeric = int(command)
@@ -290,10 +298,14 @@ class Client:
 
     def handle_command(self, sender, command, args):
         command = command.lower()
-        nick = self.nick_class.parse(sender)
 
         if hasattr(self, 'handle_%s' % command):
-            getattr(self, 'handle_%s' % command)(nick, args)
+            func = getattr(self, 'handle_%s' % command)
+            if hasattr(func, 'accepts_message'):
+                return
+
+            nick = self.nick_class.parse(sender)
+            func(nick, args)
 
     def handle_1(self, server, nick, args):
         self.is_registered = True
@@ -387,6 +399,7 @@ class Client:
                     membership = self.names_353_to_membership(user)
                     self.channel_add_membership(channel, membership)
 
+    @accepts_message
     def handle_ping(self, message):
         self.send('PONG', ' '.join(message.parameters))
 
