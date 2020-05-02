@@ -47,7 +47,6 @@ class Client:
         self.resolver = RegexResolver(
             (r'^:(\S+) (\d{3}) ([\w*]+) :?(.+)$', self.handle_numerical),
             (r'^:(\S+) (\S+) (.+)$', self.handle_command),
-            (r'^PING :?(.+)$', self.handle_ping)
         )
 
     async def connect(self, host, port, use_tls=False, loop=None):
@@ -278,7 +277,11 @@ class Client:
         except IRCIgnoreLine:
             return
 
+        message = Message.parse(line)
         self.resolver(line)
+
+        if message.command == 'PING':
+            self.handle_ping(message)
 
     def handle_numerical(self, server, command, nick, args):
         numeric = int(command)
@@ -384,8 +387,8 @@ class Client:
                     membership = self.names_353_to_membership(user)
                     self.channel_add_membership(channel, membership)
 
-    def handle_ping(self, line):
-        self.send('PONG', line)
+    def handle_ping(self, message):
+        self.send('PONG', ' '.join(message.parameters))
 
     def handle_cap(self, nick, line):
         m = IRC_CAP_REGEX.match(line)
