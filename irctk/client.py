@@ -289,6 +289,7 @@ class Client:
             return
 
         message = Message.parse(line)
+        self.irc_message(message)
 
         command = message.command.lower()
         if hasattr(self, 'handle_{}'.format(command)):
@@ -546,6 +547,10 @@ class Client:
     def irc_raw(self, line):
         if hasattr(self.delegate, 'irc_raw'):
             self.delegate.irc_raw(self, line)
+
+    def irc_message(self, message):
+        if hasattr(self.delegate, 'irc_message'):
+            self.delegate.irc_message(self, message)
 
     def irc_private_message(self, nick, message):
         if hasattr(self.delegate, 'irc_private_message'):
