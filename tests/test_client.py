@@ -12,11 +12,15 @@ class ClientTests(unittest.TestCase):
         self.client.delegate = self
 
         self.private_messages = []
+        self.channel_messages = []
 
     # Delegate
 
     def irc_private_message(self, client, nick, message):
         self.private_messages.append((client, nick, message))
+
+    def irc_channel_message(self, client, nick, channel, message):
+        self.channel_messages.append((client, nick, channel, message))
 
     # Tests
 
@@ -73,7 +77,9 @@ class ClientTests(unittest.TestCase):
 
     def test_client_handles_joining_channel(self):
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
+
         channel = self.client.channels[0]
+        self.assertEqual(channel.name, '#test')
         self.assertEqual(channel.members[0].nick.nick, self.client.nick.nick)
 
     def test_client_handles_parting_channel(self):
@@ -87,6 +93,16 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
         self.client.read_data(':kylef!kyle@kyle PART #test')
         self.assertEqual(channel.members, [])
+
+    def test_client_handles_quit_removing_from_channel(self):
+        channel = self.client.add_channel('#test')
+        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+
+        self.client.read_data(':doe!kyle@kyle JOIN #test')
+        self.assertEqual(len(channel.members), 2)
+
+        self.client.read_data(':doe!kyle@kyle QUIT :goodbye')
+        self.assertEqual(len(channel.members), 1)
 
     def test_client_handles_getting_kicked_from_channel(self):
         channel = self.client.add_channel('#test')
@@ -148,6 +164,13 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(channel.topic_owner, 'james!james@james')
         self.assertEqual(channel.topic_date, datetime.datetime(2014, 3, 24, 12, 21, 20))
 
+    def test_client_handles_352(self):
+        self.client.read_data(
+            ':server 352 kylef * ~doe example.com irc-eu-1.darkscience.net kylef Hs :0 irctk'
+        )
+        self.assertEqual(self.client.nick.ident, '~doe')
+        self.assertEqual(self.client.nick.host, 'example.com')
+
     def test_client_handles_353_names(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(
@@ -203,6 +226,16 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.sent_lines, ['CAP END'])
         self.assertEqual(self.client.cap_accepted, ['multi-prefix'])
 
+    def test_client_requests_multi_prefix_capability_and_handles_rejection(self):
+        self.client.authenticate()
+        self.client.sent_lines = []  # reset, we dont care about auth stuff
+        self.client.read_data(':barjavel.freenode.net CAP * LS :multi-prefix')
+        self.assertEqual(self.client.sent_lines, ['CAP REQ multi-prefix'])
+        self.client.sent_lines = []
+        self.client.read_data(':barjavel.freenode.net CAP * NAK :multi-prefix')
+        self.assertEqual(self.client.sent_lines, ['CAP END'])
+        self.assertEqual(self.client.cap_accepted, [])
+
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):
@@ -211,6 +244,15 @@ class ClientTests(unittest.TestCase):
             self.private_messages,
             [(self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')],
         )
+
+    def test_client_forwards_channel_messages_to_delegate(self):
+        self.client.read_data(':kylef!b@irc.kylefuller.co.uk JOIN #example')
+        self.client.read_data(':bob!b@irc.kylefuller.co.uk PRIVMSG #example :Hey')
+
+        self.assertEqual(len(self.channel_messages), 1)
+        self.assertEqual(self.channel_messages[0][1].nick, 'bob')
+        self.assertEqual(self.channel_messages[0][2].name, '#example')
+        self.assertEqual(self.channel_messages[0][3], 'Hey')
 
     # Sending
 

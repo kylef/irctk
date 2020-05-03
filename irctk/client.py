@@ -10,12 +10,6 @@ from irctk.nick import Nick
 from irctk.channel import Channel, Membership
 from irctk.message import Message
 
-IRC_CAP_REGEX = re.compile(r"^(\S+) (\S+) :(.+)$")
-IRC_PRIVMSG_REGEX = re.compile(r"^(\S+) :(.+)$")
-IRC_NAMES_REGEX = re.compile(r'^(@|=|\+) (\S+) :(.+)$')
-
-IRC_KICK_REGEX = re.compile(r'^(\S+) (\S+) :(.+)$')
-
 
 class IRCIgnoreLine(Exception):
     pass
@@ -101,7 +95,7 @@ class Client:
         return self.nickname
 
     def get_alt_nickname(self, nickname):
-        return nickname + '_'
+        return self.nickname + '_'
 
     def get_ident(self):
         return self.ident
@@ -358,63 +352,55 @@ class Client:
     def handle_005(self, message):
         self.isupport.parse(message.parameters[1])
 
-    def handle_324(self, server, nick, args):  # MODE
-        channel_name, mode_line = args.split(' ', 1)
-
-        channel = self.find_channel(channel_name)
+    @accepts_message
+    def handle_324(self, message):  # MODE
+        channel = self.find_channel(message.get(1))
         if channel:
             channel.modes = {}
-            channel.mode_change(mode_line, self.isupport)
+            channel.mode_change(' '.join(message.parameters[2:]), self.isupport)
 
-    def handle_329(self, server, nick, args):
-        channel_name, timestamp = args.split(' ', 1)
-
-        channel = self.find_channel(channel_name)
-        if channel:
+    @accepts_message
+    def handle_329(self, message):
+        channel = self.find_channel(message.get(1))
+        timestamp = message.get(2)
+        if channel and timestamp:
             channel.creation_date = datetime.datetime.fromtimestamp(int(timestamp))
 
-    def handle_332(self, server, nick, args):
-        chan, topic = args.split(' ', 1)
-        if topic.startswith(':'):
-            topic = topic[1:]
-
-        channel = self.find_channel(chan)
+    @accepts_message
+    def handle_332(self, message):
+        channel = self.find_channel(message.get(1))
         if channel:
-            channel.topic = topic
+            channel.topic = message.get(2)
 
-    def handle_333(self, server, nick, args):
-        chan, owner, timestamp = args.split(' ', 2)
-
-        channel = self.find_channel(chan)
+    @accepts_message
+    def handle_333(self, message):
+        channel = self.find_channel(message.get(1))
         if channel:
-            channel.topic_owner = owner
-            channel.topic_date = datetime.datetime.fromtimestamp(int(timestamp))
+            channel.topic_owner = message.get(2)
 
-    def handle_352(self, server, nick, args):
-        args = args.split(' ')
+            topic_date = message.get(3)
+            if topic_date:
+                channel.topic_date = datetime.datetime.fromtimestamp(int(topic_date))
 
-        try:
-            nick = args[4]
-            ident = args[1]
-            host = args[2]
-        except IndexError:
-            return
+    # RPL_WHOREPLY
+    @accepts_message
+    def handle_352(self, message):
+        nick = message.get(5)
 
         if self.nick.nick == nick:
-            self.nick.ident = ident
-            self.nick.host = host
+            self.nick.ident = message.get(2)
+            self.nick.host = message.get(3)
 
-    def handle_432(self, server, nick, args):
+    @accepts_message
+    def handle_432(self, message):
         # Erroneous Nickname: Illegal characters
-        self.handle_433(server, nick, args)
+        self.handle_433(message)
 
-    def handle_433(self, server, nick, args):
+    @accepts_message
+    def handle_433(self, message):
         # Nickname is already in use
-        if nick == '*':
-            nick = self.get_nickname()
-
         if not self.is_registered:
-            self.send('NICK', self.get_alt_nickname(nick))
+            self.send('NICK', self.get_alt_nickname())
 
     def names_353_to_membership(self, nick):
         for mode, prefix in self.isupport['prefix'].items():
@@ -429,105 +415,98 @@ class Client:
             return Membership(self.nick_class.parse(nick))
         return Membership(self.nick_class(nick=nick))
 
-    def handle_353(self, server, nick, args):
-        m = IRC_NAMES_REGEX.match(args)
-        if m:
-            channel = self.find_channel(m.group(2))
-            if channel:
-                users = m.group(3)
+    @accepts_message
+    def handle_353(self, message):
+        channel = self.find_channel(message.get(2))
+        if channel:
+            users = message.get(3)
 
-                for user in users.split():
-                    membership = self.names_353_to_membership(user)
-                    self.channel_add_membership(channel, membership)
+            for user in users.split():
+                membership = self.names_353_to_membership(user)
+                self.channel_add_membership(channel, membership)
 
     @accepts_message
     def handle_ping(self, message):
         self.send('PONG', ' '.join(message.parameters))
 
-    def handle_cap(self, nick, line):
-        m = IRC_CAP_REGEX.match(line)
-        if m:
-            command = m.group(2).lower()
-            args = m.group(3)
+    @accepts_message
+    def handle_cap(self, message):
+        command = message.get(1)
 
-            if command == "ls":
-                supported_caps = args.lower().split()
+        if command == 'LS':
+            supported_caps = message.get(2).split()
 
-                for cap in supported_caps:
-                    if self.supports_cap(cap):
-                        self.send('CAP', 'REQ', cap)
-                        self.cap_pending.append(cap)
-            elif command == "ack":
-                caps = args.lower().split()
+            for cap in supported_caps:
+                if self.supports_cap(cap):
+                    self.send('CAP', 'REQ', cap)
+                    self.cap_pending.append(cap)
+        elif command == 'ACK':
+            caps = message.get(2).split()
 
-                for cap in caps:
-                    if cap in self.cap_pending:
-                        self.cap_pending.remove(cap)
-                        self.cap_accepted.append(cap)
-            elif command == "nak":
-                supported_caps = args.lower().split()
+            for cap in caps:
+                if cap in self.cap_pending:
+                    self.cap_pending.remove(cap)
+                    self.cap_accepted.append(cap)
+        elif command == 'NAK':
+            supported_caps = message.get(2).split()
 
-                for cap in supported_caps:
-                    if cap in self.cap_pending:
-                        self.cap_pending.remove(args)
+            for cap in supported_caps:
+                if cap in self.cap_pending:
+                    self.cap_pending.remove(cap)
 
         if not self.cap_pending:
             self.send('CAP', 'END')
 
-    def handle_join(self, nick, line):
-        if line.startswith(':'):
-            chan = line[1:]
-        else:
-            chan = line
-
-        channel = self.find_channel(chan)
+    @accepts_message
+    def handle_join(self, message):
+        nick = self.nick_class.parse(message.prefix)
+        channel = self.find_channel(message.get(0))
 
         if not channel and self.irc_equal(self.nick.nick, nick.nick):
-            channel = self.add_channel(chan)
+            channel = self.add_channel(message.get(0))
 
         if channel:
             self.channel_add_nick(channel, nick)
             self.irc_channel_join(nick, channel)
 
-    def handle_part(self, nick, line):
-        if ' :' in line:
-            chan, message = line.split(' :', 1)
-        else:
-            chan = line
-            message = ''
-
-        channel = self.find_channel(chan)
+    @accepts_message
+    def handle_part(self, message):
+        channel = self.find_channel(message.get(0))
         if channel:
+            nick = self.nick_class.parse(message.prefix)
+            message = message.get(1)
+
             self.channel_remove_nick(channel, nick)
             self.irc_channel_part(nick, channel, message)
 
-    def handle_kick(self, nick, line):
-        m = IRC_KICK_REGEX.match(line)
-        if m:
-            chan = m.group(1)
-            kicked_nick = m.group(2)
-            kicked_nick = self.nick_class(nick=kicked_nick)
-            message = m.group(3)
-
-            channel = self.find_channel(chan)
-            if channel:
-                self.channel_remove_nick(channel, kicked_nick)
-                self.irc_channel_kick(nick, channel, message)
-
-    def handle_topic(self, nick, line):
-        chan, topic = line.split(' ', 1)
-        if topic.startswith(':'):
-            topic = topic[1:]
-
-        channel = self.find_channel(chan)
+    @accepts_message
+    def handle_kick(self, message):
+        channel = self.find_channel(message.get(0))
         if channel:
-            channel.topic = topic
+            kicked_nick = message.get(1)
+            kicked_nick = self.nick_class(nick=message.get(1))
+            reason = message.get(2)
+
+            nick = self.nick_class.parse(message.prefix)
+            self.channel_remove_nick(channel, kicked_nick)
+            self.irc_channel_kick(nick, channel, reason)
+
+    @accepts_message
+    def handle_topic(self, message):
+        channel = self.find_channel(message.get(0))
+        if channel:
+            nick = self.nick_class.parse(message.prefix)
+            channel.topic = message.get(1)
             channel.topic_owner = nick
             channel.topic_date = datetime.datetime.now()
 
             self.irc_channel_topic(nick, channel)
 
-    def handle_nick(self, nick, new_nick):
+    @accepts_message
+    def handle_nick(self, message):
+        nick = self.nick_class.parse(message.prefix)
+        new_nick = message.get(0)
+
         if self.irc_equal(self.nick.nick, nick.nick):
             self.nick.nick = new_nick
 
@@ -536,21 +515,23 @@ class Client:
                 if self.irc_equal(membership.nick.nick, nick.nick):
                     membership.nick.nick = new_nick
 
-    def handle_privmsg(self, nick, line):
-        m = IRC_PRIVMSG_REGEX.match(line)
-        if m:
-            message = m.group(2)
-            if m.group(1) == str(self.nick):
-                self.irc_private_message(nick, message)
-            else:
-                channel = self.find_channel(m.group(1))
-                if channel:
-                    self.irc_channel_message(
-                        self.channel_find_nick(channel, nick.nick), channel, message
-                    )
+    @accepts_message
+    def handle_privmsg(self, message):
+        sender = self.nick_class.parse(message.prefix)
+        target = message.get(0)
+        text = message.get(1)
 
-    def handle_mode(self, nick, line):
-        subject, mode_line = line.split(' ', 1)
+        if target == str(self.nick):
+            self.irc_private_message(sender, text)
+        else:
+            channel = self.find_channel(target)
+            if channel:
+                self.irc_channel_message(sender, channel, text)
+
+    @accepts_message
+    def handle_mode(self, message):
+        subject = message.get(0)
+        mode_line = ' '.join(message.parameters[1:])
 
         if self.is_channel(subject):
             channel = self.find_channel(subject)
@@ -558,7 +539,11 @@ class Client:
             if channel:
                 channel.mode_change(mode_line, self.isupport)
 
-    def handle_quit(self, nick, reason):
+    @accepts_message
+    def handle_quit(self, message):
+        nick = self.nick_class.parse(message.prefix)
+        reason = message.get(0)
+
         for channel in self.channels:
             if self.channel_remove_nick(channel, nick):
                 self.irc_channel_quit(nick, channel, reason)

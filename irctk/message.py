@@ -157,3 +157,18 @@ class Message:
             string += ' '.join(map(parameter_to_string, enumerate(self.parameters)))
 
         return string
+
+    def get(self, index: int):
+        """
+        Returns a parameter at index or None
+
+        >>> message = Message.parse('JOIN #example')
+        >>> message.get(0)
+        '#example'
+        >>> message.get(1)
+        """
+
+        if index >= len(self.parameters):
+            return None
+
+        return self.parameters[index]
