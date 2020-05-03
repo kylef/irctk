@@ -342,7 +342,7 @@ class Client:
     def handle_352(self, message: Message):
         nick = message.get(5)
 
-        if self.nick.nick == nick:
+        if nick and self.irc_equal(self.nick.nick, nick):
             self.nick.ident = message.get(2)
             self.nick.host = message.get(3)
 
@@ -470,10 +470,10 @@ class Client:
         sender = self.nick_class.parse(message.prefix)
         target = message.get(0)
         text = message.get(1)
-        if not text:
+        if not target or not text:
             return
 
-        if target == str(self.nick):
+        if self.irc_equal(target, self.nick.nick):
             self.irc_private_message(sender, text)
         else:
             channel = self.find_channel(target)
