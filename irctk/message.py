@@ -110,6 +110,7 @@ class Message:
         self.prefix = prefix
         self.command = command
         self.parameters = parameters or []
+        self.colon = False
 
     def __str__(self):
         """
@@ -145,7 +146,10 @@ class Message:
                 parameter = item[1]
 
                 if index + 1 == len(self.parameters) and (
-                    len(parameter) == 0 or ' ' in parameter or parameter.startswith(':')
+                    self.colon
+                    or len(parameter) == 0
+                    or ' ' in parameter
+                    or parameter.startswith(':')
                 ):
                     return ':' + parameter
                 return parameter

@@ -228,23 +228,22 @@ class Client:
         self.logger.debug('C: {}'.format(line))
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
-    def send(self, *args, **kwargs):
-        if len(args) == 1 and isinstance(args[0], Message):
-            self.send_line(str(args[0]))
-            return
+    def send(self, message_or_command, *parameters, force=False):
+        if isinstance(message_or_command, Message):
+            message = message_or_command
+            if len(parameters) != 0 or force:
+                raise TypeError(
+                    'send() takes 1 positional arguments but {} was given'.format(
+                        len(parameters)
+                    )
+                )
+        else:
+            message = Message(
+                command=message_or_command, parameters=list(map(str, parameters))
+            )
+            message.colon = force
 
-        force = kwargs.get('force', False)
-        args = [str(arg) for arg in args]
-
-        try:
-            last = args[-1]
-        except IndexError:
-            return
-
-        if force or last.startswith(':') or ' ' in last:
-            args.append(':' + args.pop())
-
-        self.send_line(' '.join(args))
+        self.send_line(str(message))
 
     def authenticate(self):
         if not self.is_registered:
