@@ -1,5 +1,7 @@
 import unittest
-from irctk.channel import Channel
+from irctk.isupport import ISupport
+from irctk.nick import Nick
+from irctk.channel import Channel, Membership
 
 
 class ChannelTests(unittest.TestCase):
@@ -17,3 +19,22 @@ class ChannelTests(unittest.TestCase):
 
     def test_channnel_empty_members(self):
         self.assertEqual(len(self.channel.members), 0)
+
+    # MODE
+
+    def test_channel_set_user_mode(self):
+        membership = Membership(Nick('kyle'))
+        self.channel.members.append(membership)
+
+        self.channel.mode_change('+o kyle', ISupport())
+
+        self.assertTrue(membership.has_perm('o'))
+
+    def test_channel_unset_user_mode(self):
+        membership = Membership(Nick('kyle'), ['o', 'v'])
+        self.channel.members.append(membership)
+
+        self.channel.mode_change('-o kyle', ISupport())
+
+        self.assertFalse(membership.has_perm('o'))
+        self.assertTrue(membership.has_perm('v'))

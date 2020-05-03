@@ -49,6 +49,11 @@ class Channel(object):
     def __repr__(self):
         return '<Channel %s>' % self.name
 
+    def find_member(self, nickname):
+        for member in self.members:
+            if member.nick.nick == nickname:
+                return member
+
     def mode_change(self, modes, isupport):
         add = True
         args = []
