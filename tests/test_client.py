@@ -22,6 +22,10 @@ class ClientTests(unittest.TestCase):
     def irc_channel_message(self, client, nick, channel, message):
         self.channel_messages.append((client, nick, channel, message))
 
+    def test_set_delegate(self):
+        self.client.delegate = self
+        self.assertEqual(self.client.delegate, self)
+
     # Tests
 
     def test_client_has_nickname(self):
@@ -176,13 +180,15 @@ class ClientTests(unittest.TestCase):
     def test_client_handles_353_names(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(
-            ':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit'
+            ':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit +other'
         )
-        self.assertEqual(len(channel.members), 3)
+        self.assertEqual(len(channel.members), 4)
         self.assertEqual(channel.members[0].nick, Nick.parse('Derecho!der@der'))
         self.assertEqual(channel.members[1].nick, Nick.parse('Tempest!tmp@tmp'))
         self.assertEqual(channel.members[2].nick, Nick(nick='dijit'))
+        self.assertEqual(channel.members[3].nick, Nick(nick='other'))
         self.assertTrue(channel.members[1].has_perm('v'))
+        self.assertTrue(channel.members[3].has_perm('v'))
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')
@@ -238,6 +244,25 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.sent_lines, ['CAP END'])
         self.assertEqual(self.client.cap_accepted, [])
 
+    # Perform
+
+    def test_client_perform_on_connect(self):
+        self.client.authenticate()
+
+        self.assertEqual(
+            self.client.sent_lines,
+            ['CAP LS', 'NICK kylef', 'USER kyle 0 * :Kyle Fuller'],
+        )
+
+    def test_client_perform_on_connect_with_password(self):
+        self.client.password = 'sekret'
+        self.client.authenticate()
+
+        self.assertEqual(
+            self.client.sent_lines,
+            ['CAP LS', 'PASS sekret', 'NICK kylef', 'USER kyle 0 * :Kyle Fuller'],
+        )
+
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):
@@ -263,6 +288,12 @@ class ClientTests(unittest.TestCase):
         self.client.send(message)
 
         self.assertEqual(self.client.sent_lines, ['PRIVMSG kyle :Hello World'])
+
+    def test_client_send_message_bad_args(self):
+        message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+
+        with self.assertRaises(TypeError):
+            self.client.send(message, 'x')
 
     def test_client_send_privmsg(self):
         self.client.send_privmsg('kyle', 'Hello')

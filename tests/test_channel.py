@@ -38,3 +38,14 @@ class ChannelTests(unittest.TestCase):
 
         self.assertFalse(membership.has_perm('o'))
         self.assertTrue(membership.has_perm('v'))
+
+    def test_channel_set_mode_with_arg(self):
+        self.channel.mode_change('+k sekret', ISupport())
+
+        self.assertEqual(self.channel.modes['k'], 'sekret')
+
+    def test_channel_unset_mode_with_arg(self):
+        self.channel.modes['k'] = 'sekret'
+        self.channel.mode_change('-k sekret', ISupport())
+
+        self.assertTrue('k' not in self.channel.modes)

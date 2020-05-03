@@ -275,11 +275,6 @@ class Client:
             if self.irc_equal(membership.nick.nick, str(nick)):
                 return membership
 
-    def channel_find_nick(self, channel, nick):
-        membership = self.channel_find_membership(channel, nick)
-        if membership:
-            return membership.nick
-
     # Handle IRC lines
 
     def read_data(self, data):
