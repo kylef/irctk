@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Optional
 
 
 class MessageTag:
     @classmethod
-    def parse_value(cls, value: str):
+    def parse_value(cls, value: str) -> str:
         return (
             value.replace('\\:', ';')
             .replace('\\s', ' ')
@@ -158,7 +158,7 @@ class Message:
 
         return string
 
-    def get(self, index: int):
+    def get(self, index: int) -> Optional[str]:
         """
         Returns a parameter at index or None
 

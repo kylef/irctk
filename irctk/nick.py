@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 
 class Nick(object):
@@ -11,7 +12,9 @@ class Nick(object):
             return cls(m.group(1), m.group(2), m.group(3))
         return cls(host=userhost)
 
-    def __init__(self, nick: str = '', ident: str = '', host: str = ''):
+    def __init__(
+        self, nick: str = '', ident: Optional[str] = '', host: Optional[str] = ''
+    ):
         self.nick = nick
         self.ident = ident
         self.host = host

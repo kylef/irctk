@@ -6,3 +6,6 @@ Channel
 .. autoclass:: Channel
     :members:
 
+.. autoclass:: Membership
+    :members:
+

@@ -6,4 +6,5 @@ Message
 .. autoclass:: Message
     :members:
 
-
+.. autoclass:: MessageTag
+    :members:

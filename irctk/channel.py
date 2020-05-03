@@ -1,9 +1,13 @@
+from typing import List
+from irctk.isupport import ISupport
+
+
 class Membership(object):
     """
     Represents a nick membership inside a channnel.
     """
 
-    def __init__(self, nick, modes=None):
+    def __init__(self, nick: str, modes: List[str] = None):
         self.nick = nick
         self.modes = modes or []
 
@@ -54,13 +58,13 @@ class Channel(object):
             if member.nick.nick == nickname:
                 return member
 
-    def mode_change(self, modes, isupport):
+    def mode_change(self, modes: str, isupport: ISupport):
         add = True
-        args = []
+        args: List[str] = []
 
         if ' ' in modes:
-            modes, args = modes.split(' ', 1)
-            args = args.split()
+            modes, args_string = modes.split(' ', 1)
+            args = args_string.split()
 
         for mode in modes:
             if mode == '+':
