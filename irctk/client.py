@@ -228,10 +228,10 @@ class Client:
         self.logger.debug('C: {}'.format(line))
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
-    def send(self, message_or_command, *parameters, force=False):
+    def send(self, message_or_command, *parameters, colon=False):
         if isinstance(message_or_command, Message):
             message = message_or_command
-            if len(parameters) != 0 or force:
+            if len(parameters) != 0 or colon:
                 raise TypeError(
                     'send() takes 1 positional arguments but {} was given'.format(
                         len(parameters)
@@ -241,7 +241,7 @@ class Client:
             message = Message(
                 command=message_or_command, parameters=list(map(str, parameters))
             )
-            message.colon = force
+            message.colon = colon
 
         self.send_line(str(message))
 
@@ -255,7 +255,7 @@ class Client:
 
             self.send('NICK', self.get_nickname())
             self.send(
-                'USER', self.get_ident(), '0', '*', self.get_realname(), force=True
+                'USER', self.get_ident(), '0', '*', self.get_realname(), colon=True
             )
 
     # Channel
