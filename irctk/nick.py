@@ -11,7 +11,7 @@ class Nick(object):
             return cls(m.group(1), m.group(2), m.group(3))
         return cls(host=userhost)
 
-    def __init__(self, nick='', ident='', host=''):
+    def __init__(self, nick: str = '', ident: str = '', host: str = ''):
         self.nick = nick
         self.ident = ident
         self.host = host
@@ -26,4 +26,8 @@ class Nick(object):
         if not isinstance(other, Nick):
             return False
 
-        return other.nick == self.nick and other.ident == self.ident and other.host == self.host
+        return (
+            other.nick == self.nick and
+            other.ident == self.ident and
+            other.host == self.host
+        )

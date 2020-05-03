@@ -18,16 +18,15 @@ class MessageTag:
             # FIXME support client tags
             string = string[1:]
 
+        vendor = None
+        value = None
+
         if '=' in string:
             string, value = string.split('=', 1)
             value = cls.parse_value(value)
-        else:
-            value = None
 
         if '/' in string:
             vendor, string = string.split('/', 1)
-        else:
-            vendor = None
 
         return cls(vendor=vendor, name=string, value=value)
 
@@ -73,20 +72,19 @@ class Message:
         ['#example', 'Hello World']
         """
 
+        tags = []
+        prefix = None
+        parameters = []
+
         if string.startswith('@'):
-            tags, string = string[1:].split(' ', 1)
-            tags = list(map(MessageTag.parse, tags.split(';')))
-        else:
-            tags = []
+            tags_str, string = string[1:].split(' ', 1)
+            tags = list(map(MessageTag.parse, tags_str.split(';')))
 
         if string.startswith(':'):
             prefix, string = string.split(' ', 1)
             prefix = prefix[1:]
-        else:
-            prefix = None
 
         command, string = string.split(' ', 1)
-        parameters = []
 
         while len(string) != 0:
             if string[0] == ':':

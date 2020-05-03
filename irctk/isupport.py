@@ -1,3 +1,4 @@
+from typing import List
 import re
 
 
@@ -148,7 +149,7 @@ class ISupport(dict):
         return self['nicklen']
 
     @property
-    def maximum_channel_length(self):
+    def maximum_channel_length(self) -> int:
         """
         Returns the maximum length of a channel name.
 
@@ -160,7 +161,7 @@ class ISupport(dict):
         return self['channellen']
 
     @property
-    def channel_prefixes(self):
+    def channel_prefixes(self) -> List[str]:
         """
         Returns a list of channel prefixes.
 
@@ -172,7 +173,7 @@ class ISupport(dict):
         return self['chantypes']
 
     @property
-    def case_mapping(self):
+    def case_mapping(self) -> str:
         """
         Returns the case mapping.
 
@@ -185,7 +186,7 @@ class ISupport(dict):
 
     #
 
-    def is_channel(self, channel_name):
+    def is_channel(self, channel_name) -> bool:
         """
         Returns True if supplied channel name is a valid channel name.
 
