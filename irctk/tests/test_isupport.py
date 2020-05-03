@@ -58,16 +58,19 @@ class ISupportTests(unittest.TestCase):
 
     def test_can_parse_chanmodes(self):
         self.support.parse('CHANMODES=ae,bf,cg,dh')
-        self.assertEqual(self.support['chanmodes'], {
-            'a': list,
-            'e': list,
-            'b': 'arg',
-            'f': 'arg',
-            'c': 'arg_set',
-            'g': 'arg_set',
-            'd': None,
-            'h': None,
-        })
+        self.assertEqual(
+            self.support['chanmodes'],
+            {
+                'a': list,
+                'e': list,
+                'b': 'arg',
+                'f': 'arg',
+                'c': 'arg_set',
+                'g': 'arg_set',
+                'd': None,
+                'h': None,
+            },
+        )
 
     def test_can_parse_chantypes(self):
         self.support.parse('CHANTYPES=$^')

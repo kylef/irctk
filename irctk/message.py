@@ -4,13 +4,13 @@ from typing import List
 class MessageTag:
     @classmethod
     def parse_value(cls, value: str):
-        return (value
-                .replace('\\:', ';')
-                .replace('\\s', ' ')
-                .replace('\\\\', '\\')
-                .replace('\\r', '\r')
-                .replace('\\n', '\n')
-                )
+        return (
+            value.replace('\\:', ';')
+            .replace('\\s', ' ')
+            .replace('\\\\', '\\')
+            .replace('\\r', '\r')
+            .replace('\\n', '\n')
+        )
 
     @classmethod
     def parse(cls, string: str):
@@ -47,12 +47,12 @@ class MessageTag:
 
         if self.value and len(self.value) > 0:
             tag += '=' + (
-                self.value
-                .replace('\\', '\\\\')
+                self.value.replace('\\', '\\\\')
                 .replace(';', '\\:')
                 .replace(' ', '\\s')
                 .replace('\r', '\\r')
-                .replace('\n', '\\n'))
+                .replace('\n', '\\n')
+            )
 
         return tag
 
@@ -99,7 +99,13 @@ class Message:
 
         return cls(tags, prefix, command, parameters)
 
-    def __init__(self, tags: List[MessageTag] = None, prefix: str = None, command: str = '', parameters: List[str] = None):
+    def __init__(
+        self,
+        tags: List[MessageTag] = None,
+        prefix: str = None,
+        command: str = '',
+        parameters: List[str] = None,
+    ):
         self.tags = tags or []
         self.prefix = prefix
         self.command = command
@@ -138,7 +144,9 @@ class Message:
                 index = item[0]
                 parameter = item[1]
 
-                if index + 1 == len(self.parameters) and (len(parameter) == 0 or ' ' in parameter or parameter.startswith(':')):
+                if index + 1 == len(self.parameters) and (
+                    len(parameter) == 0 or ' ' in parameter or parameter.startswith(':')
+                ):
                     return ':' + parameter
                 return parameter
 

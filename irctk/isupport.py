@@ -71,7 +71,9 @@ class ISupport(dict):
             elif value is None:
                 no_args.append(mode)
 
-        return ','.join(map(lambda modes: ''.join(modes), [list_args, arg, arg_set, no_args]))
+        return ','.join(
+            map(lambda modes: ''.join(modes), [list_args, arg, arg_set, no_args])
+        )
 
     def to_str_prefix(self):
         prefix = self.get('prefix', {})
@@ -101,7 +103,14 @@ class ISupport(dict):
                 self.parse_chanmodes(value)
             elif key == 'CHANTYPES':
                 self['chantypes'] = list(value)
-            elif key in ('CHANNELLEN', 'NICKLEN', 'MODES', 'TOPICLEN', 'KICKLEN', 'MODES'):
+            elif key in (
+                'CHANNELLEN',
+                'NICKLEN',
+                'MODES',
+                'TOPICLEN',
+                'KICKLEN',
+                'MODES',
+            ):
                 self[key.lower()] = int(value)
             elif key == 'CASEMAPPING':
                 self[key.lower()] = value

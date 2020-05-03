@@ -30,7 +30,9 @@ class Client:
     channel_class = Channel
     nick_class = Nick
 
-    def __init__(self, nickname='irctk', ident='irctk', realname='irctk', password=None):
+    def __init__(
+        self, nickname='irctk', ident='irctk', realname='irctk', password=None
+    ):
         super(Client, self).__init__()
 
         self.logger = logging.getLogger(__name__)
@@ -119,18 +121,26 @@ class Client:
         """
 
         if self.isupport.case_mapping == 'rfc1459':
+
             def lower(string):
-                return (string.lower()
-                    .replace('[', '{')
-                    .replace(']', '}')
-                    .replace('\\', '|'))
-        elif self.isupport.case_mapping == 'rfc1459-strict':
-            def lower(string):
-                return (string.lower()
+                return (
+                    string.lower()
                     .replace('[', '{')
                     .replace(']', '}')
                     .replace('\\', '|')
-                    .replace('^', '~'))
+                )
+
+        elif self.isupport.case_mapping == 'rfc1459-strict':
+
+            def lower(string):
+                return (
+                    string.lower()
+                    .replace('[', '{')
+                    .replace(']', '}')
+                    .replace('\\', '|')
+                    .replace('^', '~')
+                )
+
         elif self.isupport.case_mapping == 'ascii':
             lower = string.lower
         else:
@@ -245,7 +255,9 @@ class Client:
                 self.send('PASS', password)
 
             self.send('NICK', self.get_nickname())
-            self.send('USER', self.get_ident(), '0', '*', self.get_realname(), force=True)
+            self.send(
+                'USER', self.get_ident(), '0', '*', self.get_realname(), force=True
+            )
 
     # Channel
 
@@ -398,7 +410,7 @@ class Client:
     def names_353_to_membership(self, nick):
         for mode, prefix in self.isupport['prefix'].items():
             if nick.startswith(prefix):
-                nickname = nick[len(mode):]
+                nickname = nick[len(mode) :]
                 if '@' in nickname:
                     n = self.nick_class.parse(nickname)
                 else:
@@ -524,7 +536,9 @@ class Client:
             else:
                 channel = self.find_channel(m.group(1))
                 if channel:
-                    self.irc_channel_message(self.channel_find_nick(channel, nick.nick), channel, message)
+                    self.irc_channel_message(
+                        self.channel_find_nick(channel, nick.nick), channel, message
+                    )
 
     def handle_mode(self, nick, line):
         subject, mode_line = line.split(' ', 1)

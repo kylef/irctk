@@ -27,7 +27,7 @@ class Nick(object):
             return False
 
         return (
-            other.nick == self.nick and
-            other.ident == self.ident and
-            other.host == self.host
+            other.nick == self.nick
+            and other.ident == self.ident
+            and other.host == self.host
         )

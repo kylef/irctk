@@ -129,7 +129,9 @@ class ClientTests(unittest.TestCase):
     def test_client_handles_329_creation_date(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':server 329 kylef #test 1358579621')
-        self.assertEqual(channel.creation_date, datetime.datetime(2013, 1, 19, 7, 13, 41))
+        self.assertEqual(
+            channel.creation_date, datetime.datetime(2013, 1, 19, 7, 13, 41)
+        )
 
     def test_client_handles_332_topic(self):
         channel = self.client.add_channel('#test')
@@ -144,7 +146,9 @@ class ClientTests(unittest.TestCase):
 
     def test_client_handles_353_names(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit')
+        self.client.read_data(
+            ':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit'
+        )
         self.assertEqual(len(channel.members), 3)
         self.assertEqual(channel.members[0].nick, Nick.parse('Derecho!der@der'))
         self.assertEqual(channel.members[1].nick, Nick.parse('Tempest!tmp@tmp'))
@@ -164,7 +168,9 @@ class ClientTests(unittest.TestCase):
 
         self.assertEqual(channel.members[0].nick.nick, 'kyle2')
 
-    def test_client_updates_channel_membership_during_nick_change_case_insensitive(self):
+    def test_client_updates_channel_membership_during_nick_change_case_insensitive(
+        self,
+    ):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kyle!kyle@kyle JOIN #test')
         self.client.read_data(':KYLE!kyle@kyle NICK kyle2')
@@ -197,9 +203,10 @@ class ClientTests(unittest.TestCase):
 
     def test_client_forwards_private_messages_to_delegate(self):
         self.client.read_data(':bob!b@irc.kylefuller.co.uk PRIVMSG kylef :Hey')
-        self.assertEqual(self.private_messages, [
-            (self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')
-        ])
+        self.assertEqual(
+            self.private_messages,
+            [(self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')],
+        )
 
     # Sending
 
@@ -207,30 +214,20 @@ class ClientTests(unittest.TestCase):
         message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
         self.client.send(message)
 
-        self.assertEqual(self.client.sent_lines, [
-            'PRIVMSG kyle :Hello World'
-        ])
+        self.assertEqual(self.client.sent_lines, ['PRIVMSG kyle :Hello World'])
 
     def test_client_send_privmsg(self):
         self.client.send_privmsg('kyle', 'Hello')
-        self.assertEqual(self.client.sent_lines, [
-            'PRIVMSG kyle :Hello'
-        ])
+        self.assertEqual(self.client.sent_lines, ['PRIVMSG kyle :Hello'])
 
     def test_client_send_join(self):
         self.client.send_join('#palaver')
-        self.assertEqual(self.client.sent_lines, [
-            'JOIN #palaver'
-        ])
+        self.assertEqual(self.client.sent_lines, ['JOIN #palaver'])
 
     def test_client_send_join_with_key(self):
         self.client.send_join('#palaver', 'secret')
-        self.assertEqual(self.client.sent_lines, [
-            'JOIN #palaver secret'
-        ])
+        self.assertEqual(self.client.sent_lines, ['JOIN #palaver secret'])
 
     def test_client_send_part(self):
         self.client.send_part('#palaver')
-        self.assertEqual(self.client.sent_lines, [
-            'PART #palaver'
-        ])
+        self.assertEqual(self.client.sent_lines, ['PART #palaver'])
