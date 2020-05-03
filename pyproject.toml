@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "irc-toolkit"
+version = "0.2.0"
+description = "A Python IRCv3 Client Library"
+authors = ["Kyle Fuller <kyle@fuller.li>"]
+license = "BSD"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.5"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.4"
+pytest-mypy = "^0.6.2"
+pytest-cov = "^2.8.1"
