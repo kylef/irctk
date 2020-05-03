@@ -1,5 +1,8 @@
-from typing import List
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+
 from irctk.isupport import ISupport
+from irctk.nick import Nick
 
 
 class Membership(object):
@@ -7,18 +10,18 @@ class Membership(object):
     Represents a nick membership inside a channnel.
     """
 
-    def __init__(self, nick: str, modes: List[str] = None):
+    def __init__(self, nick: Nick, modes: List[str] = None):
         self.nick = nick
         self.modes = modes or []
 
-    def has_perm(self, perm):
+    def has_perm(self, perm: str) -> bool:
         return perm in self.modes
 
-    def add_perm(self, perm):
+    def add_perm(self, perm: str):
         if not self.has_perm(perm):
             self.modes.append(perm)
 
-    def remove_perm(self, perm):
+    def remove_perm(self, perm: str):
         self.modes.remove(perm)
 
 
@@ -27,21 +30,21 @@ class Channel(object):
     Represents a channel
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
-        self.modes = {}
+        self.modes: Dict[str, Any] = {}
 
-        self.key = None
+        self.key: Optional[str] = None
 
         self.is_attached = False
 
-        self.creation_date = None
+        self.creation_date: Optional[datetime] = None
 
-        self.topic = None
-        self.topic_date = None
-        self.topic_owner = None
+        self.topic: Optional[str] = None
+        self.topic_date: Optional[datetime] = None
+        self.topic_owner: Optional[str] = None
 
-        self.members = []
+        self.members: List[Membership] = []
 
     def __str__(self):
         """

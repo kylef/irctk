@@ -15,6 +15,10 @@ class IRCIgnoreLine(Exception):
 
 
 class Client:
+    """
+    >>> client = Client(nickname='example')
+    """
+
     channel_class = Channel
     nick_class = Nick
 
@@ -37,7 +41,6 @@ class Client:
         self.is_connected = False
         self.is_registered = False
         self.secure = False
-        self.read_until_data = "\r\n"
         self.nick = self.nick_class()
 
         self.channels: List[Channel] = []
@@ -143,13 +146,13 @@ class Client:
 
     # Channels
 
-    def is_channel(self, channel) -> bool:
-        if isinstance(channel, Channel):
-            return True
-
+    def is_channel(self, channel: str) -> bool:
         return self.isupport.is_channel(channel)
 
-    def find_channel(self, name) -> Optional[Channel]:
+    def find_channel(self, name: Optional[str]) -> Optional[Channel]:
+        if not name:
+            return None
+
         for channel in self.channels:
             if self.irc_equal(channel.name, name):
                 return channel
@@ -223,6 +226,12 @@ class Client:
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
     def send(self, message_or_command, *parameters, colon: bool = False):
+        """
+        Send an IRC message
+
+        >>> client.send('JOIN', '#example')
+        """
+
         if isinstance(message_or_command, Message):
             message = message_or_command
             if len(parameters) != 0 or colon:
@@ -457,8 +466,10 @@ class Client:
     def handle_nick(self, message: Message):
         nick = self.nick_class.parse(message.prefix)
         new_nick = message.get(0)
+        if not new_nick:
+            return
 
-        if new_nick and self.irc_equal(self.nick.nick, nick.nick):
+        if self.irc_equal(self.nick.nick, nick.nick):
             self.nick.nick = new_nick
 
         for channel in self.channels:
@@ -482,12 +493,12 @@ class Client:
 
     def handle_mode(self, message: Message):
         subject = message.get(0)
-        mode_line = ' '.join(message.parameters[1:])
 
-        if self.is_channel(subject):
+        if subject and self.is_channel(subject):
             channel = self.find_channel(subject)
 
             if channel:
+                mode_line = ' '.join(message.parameters[1:])
                 channel.mode_change(mode_line, self.isupport)
 
     def handle_quit(self, message: Message):

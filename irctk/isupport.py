@@ -146,7 +146,7 @@ class ISupport(dict):
     # Get
 
     @property
-    def maximum_nick_length(self):
+    def maximum_nick_length(self) -> int:
         """
         Returns the maximum length of a nickname.
 
