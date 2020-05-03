@@ -1,6 +1,7 @@
 import unittest
 from irctk.isupport import ISupport
 
+
 class ISupportTests(unittest.TestCase):
     def setUp(self):
         self.support = ISupport()
@@ -82,4 +83,3 @@ class ISupportTests(unittest.TestCase):
         new_support.parse(line)
 
         self.assertEqual(new_support, self.support)
-

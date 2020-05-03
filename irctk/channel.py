@@ -1,6 +1,3 @@
-from irctk.nick import Nick
-
-
 class Membership(object):
     """
     Represents a nick membership inside a channnel.
@@ -102,7 +99,7 @@ class Channel(object):
                         if mode in self.modes:
                             del self.modes[mode]
 
-                elif args_type == None:
+                elif args_type is None:
                     if add:
                         self.modes[mode] = True
                     elif mode in self.modes:

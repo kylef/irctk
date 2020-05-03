@@ -1,6 +1,5 @@
 import unittest
 from irctk.channel import Channel
-from irctk.tests.mock_client import MockClient as Client
 
 
 class ChannelTests(unittest.TestCase):

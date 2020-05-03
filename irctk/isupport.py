@@ -19,7 +19,7 @@ class ISupport(dict):
             'n': None,
         }
 
-        self['prefix'] = { 'o': '@', 'v': '+' }
+        self['prefix'] = {'o': '@', 'v': '+'}
         self['channellen'] = 200
         self['chantypes'] = ['#', '&']
         self['modes'] = 3
@@ -63,9 +63,9 @@ class ISupport(dict):
 
             if value is list:
                 list_args.append(mode)
-            elif value is 'arg':
+            elif value == 'arg':
                 arg.append(mode)
-            elif value is 'arg_set':
+            elif value == 'arg_set':
                 arg_set.append(mode)
             elif value is None:
                 no_args.append(mode)
@@ -116,7 +116,7 @@ class ISupport(dict):
     def parse_chanmodes(self, value):
         try:
             list_args, arg, arg_set, no_args = value.split(',')
-        except:
+        except ValueError:
             return
 
         self['chanmodes'] = {}
@@ -208,4 +208,3 @@ class ISupport(dict):
                 return True
 
         return False
-

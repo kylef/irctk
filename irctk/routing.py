@@ -1,5 +1,6 @@
 import re
 
+
 class RegexPattern(object):
     def __init__(self, regex, handler, default_kwargs={}):
         self.regex = re.compile(regex, re.UNICODE)
@@ -23,6 +24,7 @@ class RegexPattern(object):
 
         return self.callback, args, kwargs
 
+
 class RegexResolver(object):
     def __init__(self, *patterns):
         self.patterns = []
@@ -45,4 +47,3 @@ class RegexResolver(object):
         if result:
             callback, args, kwargs = result
             return callback(*args, **kwargs)
-

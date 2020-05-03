@@ -115,7 +115,7 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':kyle!kyle@kyle MODE #test -b cake')
         self.assertEqual(channel.modes['b'], ['snake'])
 
-    def test_client_handles_removing_channel_list_mode(self):
+    def test_client_handles_removing_channel_list_mode2(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kyle!kyle@kyle MODE #test +l 5')
         self.client.read_data(':kyle!kyle@kyle MODE #test +l 6')
@@ -197,8 +197,9 @@ class ClientTests(unittest.TestCase):
 
     def test_client_forwards_private_messages_to_delegate(self):
         self.client.read_data(':bob!b@irc.kylefuller.co.uk PRIVMSG kylef :Hey')
-        self.assertEqual(self.private_messages,
-            [(self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')])
+        self.assertEqual(self.private_messages, [
+            (self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')
+        ])
 
     # Sending
 

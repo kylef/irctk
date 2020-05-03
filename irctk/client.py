@@ -4,7 +4,7 @@ import string
 import asyncio
 import logging
 
-from irctk.routing import *
+from irctk.routing import RegexResolver
 from irctk.isupport import ISupport
 from irctk.nick import Nick
 from irctk.channel import Channel, Membership
@@ -278,7 +278,6 @@ class Client:
             if self.irc_equal(membership.nick.nick, str(nick)):
                 return membership
 
-
     def channel_find_nick(self, channel, nick):
         membership = self.channel_find_membership(channel, nick)
         if membership:
@@ -338,7 +337,7 @@ class Client:
     def handle_5(self, server, nick, args):
         self.isupport.parse(args)
 
-    def handle_324(self, server, nick, args): # MODE
+    def handle_324(self, server, nick, args):  # MODE
         channel_name, mode_line = args.split(' ', 1)
 
         channel = self.find_channel(channel_name)
@@ -591,4 +590,3 @@ class Client:
 
     def irc_channel_mode(self, nick, channel, mode, arg, added):
         pass
-

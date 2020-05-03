@@ -8,4 +8,3 @@ class MockClient(Client):
 
     def send_line(self, line):
         self.sent_lines.append(line)
-
