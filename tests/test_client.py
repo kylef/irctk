@@ -187,8 +187,8 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(channel.members[1].nick, Nick.parse('Tempest!tmp@tmp'))
         self.assertEqual(channel.members[2].nick, Nick(nick='dijit'))
         self.assertEqual(channel.members[3].nick, Nick(nick='other'))
-        self.assertTrue(channel.members[1].has_perm('v'))
-        self.assertTrue(channel.members[3].has_perm('v'))
+        self.assertTrue(channel.members[1].has_mode('v'))
+        self.assertTrue(channel.members[3].has_mode('v'))
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')

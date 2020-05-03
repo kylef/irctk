@@ -28,7 +28,7 @@ class ChannelTests(unittest.TestCase):
 
         self.channel.mode_change('+o kyle', ISupport())
 
-        self.assertTrue(membership.has_perm('o'))
+        self.assertTrue(membership.has_mode('o'))
 
     def test_channel_unset_user_mode(self):
         membership = Membership(Nick('kyle'), ['o', 'v'])
@@ -36,8 +36,8 @@ class ChannelTests(unittest.TestCase):
 
         self.channel.mode_change('-o kyle', ISupport())
 
-        self.assertFalse(membership.has_perm('o'))
-        self.assertTrue(membership.has_perm('v'))
+        self.assertFalse(membership.has_mode('o'))
+        self.assertTrue(membership.has_mode('v'))
 
     def test_channel_set_mode_with_arg(self):
         self.channel.mode_change('+k sekret', ISupport())

@@ -14,11 +14,17 @@ class Membership(object):
         self.nick = nick
         self.modes = modes or []
 
-    def has_perm(self, perm: str) -> bool:
+    def has_mode(self, perm: str) -> bool:
+        """
+        Checks if the membership contains a user mode
+
+        >>> membership.has_mode('o')
+        """
+
         return perm in self.modes
 
     def add_perm(self, perm: str):
-        if not self.has_perm(perm):
+        if not self.has_mode(perm):
             self.modes.append(perm)
 
     def remove_perm(self, perm: str):
