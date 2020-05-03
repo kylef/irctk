@@ -3,14 +3,24 @@ from typing import List
 
 class MessageTag:
     @classmethod
+    def parse_value(cls, value: str):
+        return (value
+                .replace('\\:', ';')
+                .replace('\\s', ' ')
+                .replace('\\\\', '\\')
+                .replace('\\r', '\r')
+                .replace('\\n', '\n')
+                )
+
+    @classmethod
     def parse(cls, string: str):
         if string.startswith('+'):
             # FIXME support client tags
             string = string[1:]
 
         if '=' in string:
-            # FIXME support escaping
             string, value = string.split('=', 1)
+            value = cls.parse_value(value)
         else:
             value = None
 
@@ -21,7 +31,7 @@ class MessageTag:
 
         return cls(vendor=vendor, name=string, value=value)
 
-    def __init__(self, vendor: str=None, name: str=None, value: str=None):
+    def __init__(self, vendor: str = None, name: str = None, value: str = None):
         self.vendor = vendor
         self.name = name
         self.value = value
@@ -37,8 +47,13 @@ class MessageTag:
         tag += self.name
 
         if self.value and len(self.value) > 0:
-            # FIXME escaping
-            tag += '=' + self.value
+            tag += '=' + (
+                self.value
+                .replace('\\', '\\\\')
+                .replace(';', '\\:')
+                .replace(' ', '\\s')
+                .replace('\r', '\\r')
+                .replace('\n', '\\n'))
 
         return tag
 

@@ -2,6 +2,41 @@ import unittest
 from irctk.message import Message, MessageTag
 
 
+class MessageTagTests(unittest.TestCase):
+    def test_parse_name(self):
+        tag = MessageTag.parse('account')
+
+        self.assertIsNone(tag.vendor)
+        self.assertEqual(tag.name, 'account')
+        self.assertIsNone(tag.value)
+
+    def test_parse_vendor(self):
+        tag = MessageTag.parse('draft/account')
+
+        self.assertEqual(tag.vendor, 'draft')
+        self.assertEqual(tag.name, 'account')
+        self.assertIsNone(tag.value)
+
+    def test_parse_value(self):
+        tag = MessageTag.parse('account=doe')
+
+        self.assertIsNone(tag.vendor)
+        self.assertEqual(tag.name, 'account')
+        self.assertEqual(tag.value, 'doe')
+
+    def test_parse_escaped_value(self):
+        tag = MessageTag.parse('+example=raw+:=,escaped\\:\\s\\\\')
+
+        self.assertIsNone(tag.vendor)
+        self.assertEqual(tag.name, 'example')
+        self.assertEqual(tag.value, 'raw+:=,escaped; \\')
+
+    def test_to_string(self):
+        tag = MessageTag(vendor='draft', name='example', value='raw+:=,escaped; \\')
+
+        self.assertEqual(str(tag), 'draft/example=raw+:=,escaped\\:\\s\\\\')
+
+
 class MessageTests(unittest.TestCase):
     def test_message_creation(self):
         message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
