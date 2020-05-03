@@ -1,10 +1,8 @@
-import re
 import datetime
 import string
 import asyncio
 import logging
 
-from irctk.routing import RegexResolver
 from irctk.isupport import ISupport
 from irctk.nick import Nick
 from irctk.channel import Channel, Membership
@@ -13,11 +11,6 @@ from irctk.message import Message
 
 class IRCIgnoreLine(Exception):
     pass
-
-
-def accepts_message(func):
-    func.accepts_message = True
-    return func
 
 
 class Client:
@@ -47,11 +40,6 @@ class Client:
 
         self.cap_accepted = []
         self.cap_pending = []
-
-        self.resolver = RegexResolver(
-            (r'^:(\S+) (\d{3}) ([\w*]+) :?(.+)$', self.handle_numerical),
-            (r'^:(\S+) (\S+) (.+)$', self.handle_command),
-        )
 
         self.modules = []
 
@@ -309,38 +297,8 @@ class Client:
         command = message.command.lower()
         if hasattr(self, 'handle_{}'.format(command)):
             func = getattr(self, 'handle_{}'.format(command))
-            if hasattr(func, 'accepts_message'):
-                func(message)
+            func(message)
 
-        # FIXME old method dispatching
-        string = line
-        # stripping tags from unsupported code paths
-        if string.startswith('@'):
-            _, string = string.split(' ', 1)
-
-        self.resolver(string)
-
-    def handle_numerical(self, server, command, nick, args):
-        numeric = int(command)
-        if hasattr(self, 'handle_%s' % numeric):
-            func = getattr(self, 'handle_%s' % numeric)
-            if hasattr(func, 'accepts_message'):
-                return
-
-            func(server, nick, args)
-
-    def handle_command(self, sender, command, args):
-        command = command.lower()
-
-        if hasattr(self, 'handle_%s' % command):
-            func = getattr(self, 'handle_%s' % command)
-            if hasattr(func, 'accepts_message'):
-                return
-
-            nick = self.nick_class.parse(sender)
-            func(nick, args)
-
-    @accepts_message
     def handle_001(self, message):
         self.is_registered = True
         self.nick.nick = message.parameters[0]
@@ -348,31 +306,26 @@ class Client:
         self.send('WHO', self.nick)
         self.irc_registered()
 
-    @accepts_message
     def handle_005(self, message):
         self.isupport.parse(message.parameters[1])
 
-    @accepts_message
     def handle_324(self, message):  # MODE
         channel = self.find_channel(message.get(1))
         if channel:
             channel.modes = {}
             channel.mode_change(' '.join(message.parameters[2:]), self.isupport)
 
-    @accepts_message
     def handle_329(self, message):
         channel = self.find_channel(message.get(1))
         timestamp = message.get(2)
         if channel and timestamp:
             channel.creation_date = datetime.datetime.fromtimestamp(int(timestamp))
 
-    @accepts_message
     def handle_332(self, message):
         channel = self.find_channel(message.get(1))
         if channel:
             channel.topic = message.get(2)
 
-    @accepts_message
     def handle_333(self, message):
         channel = self.find_channel(message.get(1))
         if channel:
@@ -383,7 +336,6 @@ class Client:
                 channel.topic_date = datetime.datetime.fromtimestamp(int(topic_date))
 
     # RPL_WHOREPLY
-    @accepts_message
     def handle_352(self, message):
         nick = message.get(5)
 
@@ -391,12 +343,10 @@ class Client:
             self.nick.ident = message.get(2)
             self.nick.host = message.get(3)
 
-    @accepts_message
     def handle_432(self, message):
         # Erroneous Nickname: Illegal characters
         self.handle_433(message)
 
-    @accepts_message
     def handle_433(self, message):
         # Nickname is already in use
         if not self.is_registered:
@@ -415,7 +365,6 @@ class Client:
             return Membership(self.nick_class.parse(nick))
         return Membership(self.nick_class(nick=nick))
 
-    @accepts_message
     def handle_353(self, message):
         channel = self.find_channel(message.get(2))
         if channel:
@@ -425,11 +374,9 @@ class Client:
                 membership = self.names_353_to_membership(user)
                 self.channel_add_membership(channel, membership)
 
-    @accepts_message
     def handle_ping(self, message):
         self.send('PONG', ' '.join(message.parameters))
 
-    @accepts_message
     def handle_cap(self, message):
         command = message.get(1)
 
@@ -457,7 +404,6 @@ class Client:
         if not self.cap_pending:
             self.send('CAP', 'END')
 
-    @accepts_message
     def handle_join(self, message):
         nick = self.nick_class.parse(message.prefix)
         channel = self.find_channel(message.get(0))
@@ -469,7 +415,6 @@ class Client:
             self.channel_add_nick(channel, nick)
             self.irc_channel_join(nick, channel)
 
-    @accepts_message
     def handle_part(self, message):
         channel = self.find_channel(message.get(0))
         if channel:
@@ -479,7 +424,6 @@ class Client:
             self.channel_remove_nick(channel, nick)
             self.irc_channel_part(nick, channel, message)
 
-    @accepts_message
     def handle_kick(self, message):
         channel = self.find_channel(message.get(0))
         if channel:
@@ -491,7 +435,6 @@ class Client:
             self.channel_remove_nick(channel, kicked_nick)
             self.irc_channel_kick(nick, channel, reason)
 
-    @accepts_message
     def handle_topic(self, message):
         channel = self.find_channel(message.get(0))
         if channel:
@@ -502,7 +445,6 @@ class Client:
 
             self.irc_channel_topic(nick, channel)
 
-    @accepts_message
     def handle_nick(self, message):
         nick = self.nick_class.parse(message.prefix)
         new_nick = message.get(0)
@@ -515,7 +457,6 @@ class Client:
                 if self.irc_equal(membership.nick.nick, nick.nick):
                     membership.nick.nick = new_nick
 
-    @accepts_message
     def handle_privmsg(self, message):
         sender = self.nick_class.parse(message.prefix)
         target = message.get(0)
@@ -528,7 +469,6 @@ class Client:
             if channel:
                 self.irc_channel_message(sender, channel, text)
 
-    @accepts_message
     def handle_mode(self, message):
         subject = message.get(0)
         mode_line = ' '.join(message.parameters[1:])
@@ -539,7 +479,6 @@ class Client:
             if channel:
                 channel.mode_change(mode_line, self.isupport)
 
-    @accepts_message
     def handle_quit(self, message):
         nick = self.nick_class.parse(message.prefix)
         reason = message.get(0)
