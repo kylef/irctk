@@ -326,7 +326,11 @@ class Client:
     def handle_numerical(self, server, command, nick, args):
         numeric = int(command)
         if hasattr(self, 'handle_%s' % numeric):
-            getattr(self, 'handle_%s' % numeric)(server, nick, args)
+            func = getattr(self, 'handle_%s' % numeric)
+            if hasattr(func, 'accepts_message'):
+                return
+
+            func(server, nick, args)
 
     def handle_command(self, sender, command, args):
         command = command.lower()
@@ -339,15 +343,17 @@ class Client:
             nick = self.nick_class.parse(sender)
             func(nick, args)
 
-    def handle_1(self, server, nick, args):
+    @accepts_message
+    def handle_001(self, message):
         self.is_registered = True
-        self.nick.nick = nick
+        self.nick.nick = message.parameters[0]
 
         self.send('WHO', self.nick)
         self.irc_registered()
 
-    def handle_5(self, server, nick, args):
-        self.isupport.parse(args)
+    @accepts_message
+    def handle_005(self, message):
+        self.isupport.parse(message.parameters[1])
 
     def handle_324(self, server, nick, args):  # MODE
         channel_name, mode_line = args.split(' ', 1)

@@ -38,6 +38,10 @@ class ClientTests(unittest.TestCase):
         self.client.read_data(':irc.kylefuller.co.uk 001 kyle :Welcome')
         self.assertTrue(self.client.is_registered)
 
+    def test_client_takes_nick_from_001(self):
+        self.client.read_data(':irc.kylefuller.co.uk 001 kyle5 :Welcome')
+        self.assertEqual(self.client.nick.nick, 'kyle5')
+
     def test_client_ignores_message_tags(self):
         self.client.read_data('@time=bar;foo=x :irc.kylefuller.co.uk 001 kyle :Welcome')
         self.assertTrue(self.client.is_registered)
