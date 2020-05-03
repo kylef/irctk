@@ -59,6 +59,8 @@ class Client:
             (r'^:(\S+) (\S+) (.+)$', self.handle_command),
         )
 
+        self.modules = []
+
     async def connect(self, host, port, use_tls=False, loop=None):
         """
         Connect to the IRC server
@@ -71,6 +73,7 @@ class Client:
         try:
             self.reader, self.writer = await connection
         except Exception as exception:
+            self.logger.error('Disconnected', exception)
             self.irc_disconnected(exception)
             return
 
@@ -86,6 +89,7 @@ class Client:
                 self.is_connected = False
                 self.writer.close()
                 self.irc_disconnected(None)
+                self.logger.info('Disconnected')
                 return
 
             self.read_data(raw_message.decode('utf-8'))
@@ -561,51 +565,121 @@ class Client:
 
     # Delegation methods
 
-    def irc_disconnected(self, error):
-        self.logger.info('Disconnected')
+    @property
+    def delegate(self):
+        for module in self.modules:
+            if isinstance(module, DelegateModule):
+                return module.delegate
 
-        if hasattr(self.delegate, 'irc_disconnected'):
-            self.delegate.irc_disconnected(self, error)
+    @delegate.setter
+    def delegate(self, delegate):
+        for module in self.modules:
+            if isinstance(module, DelegateModule):
+                module.delegate = delegate
+                return
+
+        self.modules.append(DelegateModule(delegate))
+
+    def irc_disconnected(self, error):
+        for module in self.modules:
+            if hasattr(module, 'irc_disconnected'):
+                module.irc_disconnected(self, error)
 
     def irc_registered(self):
-        if hasattr(self.delegate, 'irc_registered'):
-            self.delegate.irc_registered(self)
+        for module in self.modules:
+            if hasattr(module, 'irc_registered'):
+                module.irc_registered(self)
 
     def irc_raw(self, line):
-        if hasattr(self.delegate, 'irc_raw'):
-            self.delegate.irc_raw(self, line)
+        for module in self.modules:
+            if hasattr(module, 'irc_raw'):
+                module.irc_raw(self, line)
 
     def irc_message(self, message):
-        if hasattr(self.delegate, 'irc_message'):
-            self.delegate.irc_message(self, message)
+        for module in self.modules:
+            if hasattr(module, 'irc_message'):
+                module.irc_message(self, message)
 
     def irc_private_message(self, nick, message):
-        if hasattr(self.delegate, 'irc_private_message'):
-            self.delegate.irc_private_message(self, nick, message)
+        for module in self.modules:
+            if hasattr(module, 'irc_private_message'):
+                module.irc_private_message(self, nick, message)
 
     def irc_channel_message(self, nick, channel, message):
-        if hasattr(self.delegate, 'irc_channel_message'):
-            self.delegate.irc_channel_message(self, nick, channel, message)
+        for module in self.modules:
+            if hasattr(module, 'irc_channel_message'):
+                module.irc_channel_message(self, nick, channel, message)
 
     def irc_channel_join(self, nick, channel):
-        if hasattr(self.delegate, 'irc_channel_join'):
-            self.delegate.irc_channel_join(self, nick, channel)
+        for module in self.modules:
+            if hasattr(module, 'irc_channel_join'):
+                module.irc_channel_join(self, nick, channel)
 
     def irc_channel_quit(self, nick, channel, message):
-        if hasattr(self.delegate, 'irc_channel_quit'):
-            self.delegate.irc_channel_quit(self, nick, channel, message)
+        for module in self.modules:
+            if hasattr(module, 'irc_channel_quit'):
+                module.irc_channel_quit(self, nick, channel, message)
 
     def irc_channel_part(self, nick, channel, message):
-        if hasattr(self.delegate, 'irc_channel_part'):
-            self.delegate.irc_channel_part(self, nick, channel, message)
+        for module in self.modules:
+            if hasattr(module, 'irc_channel_part'):
+                module.irc_channel_part(self, nick, channel, message)
 
     def irc_channel_kick(self, nick, channel, message):
-        if hasattr(self.delegate, 'irc_channel_kick'):
-            self.delegate.irc_channel_kick(self, nick, channel, message)
+        for module in self.modules:
+            if hasattr(module, 'irc_channel_kick'):
+                module.irc_channel_kick(self, nick, channel, message)
 
     def irc_channel_topic(self, nick, channel):
-        if hasattr(self.delegate, 'irc_channel_topic'):
-            self.delegate.irc_channel_topic(self, nick, channel)
+        for module in self.modules:
+            if hasattr(module, 'irc_channel_topic'):
+                module.irc_channel_topic(self, nick, channel)
 
-    def irc_channel_mode(self, nick, channel, mode, arg, added):
-        pass
+
+class DelegateModule:
+    def __init__(self, delegate):
+        self.delegate = delegate
+
+    def irc_disconnected(self, client, error):
+        if hasattr(self.delegate, 'irc_disconnected'):
+            self.delegate.irc_disconnected(client, error)
+
+    def irc_registered(self, client):
+        if hasattr(self.delegate, 'irc_registered'):
+            self.delegate.irc_registered(client)
+
+    def irc_raw(self, client, line):
+        if hasattr(self.delegate, 'irc_raw'):
+            self.delegate.irc_raw(client, line)
+
+    def irc_message(self, client, message):
+        if hasattr(self.delegate, 'irc_message'):
+            self.delegate.irc_message(client, message)
+
+    def irc_private_message(self, client, nick, message):
+        if hasattr(self.delegate, 'irc_private_message'):
+            self.delegate.irc_private_message(client, nick, message)
+
+    def irc_channel_message(self, client, nick, channel, message):
+        if hasattr(self.delegate, 'irc_channel_message'):
+            self.delegate.irc_channel_message(client, nick, channel, message)
+
+    def irc_channel_join(self, client, nick, channel):
+        if hasattr(self.delegate, 'irc_channel_join'):
+            self.delegate.irc_channel_join(client, nick, channel)
+
+    def irc_channel_quit(self, client, nick, channel, message):
+        if hasattr(self.delegate, 'irc_channel_quit'):
+            self.delegate.irc_channel_quit(client, nick, channel, message)
+
+    def irc_channel_part(self, client, nick, channel, message):
+        if hasattr(self.delegate, 'irc_channel_part'):
+            self.delegate.irc_channel_part(client, nick, channel, message)
+
+    def irc_channel_kick(self, client, nick, channel, message):
+        if hasattr(self.delegate, 'irc_channel_kick'):
+            self.delegate.irc_channel_kick(client, nick, channel, message)
+
+    def irc_channel_topic(self, client, nick, channel):
+        if hasattr(self.delegate, 'irc_channel_topic'):
+            self.delegate.irc_channel_topic(client, nick, channel)
