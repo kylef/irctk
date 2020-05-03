@@ -81,12 +81,14 @@ class ClientTests(unittest.TestCase):
         channel = self.client.channels[0]
         self.assertEqual(channel.name, '#test')
         self.assertEqual(channel.members[0].nick.nick, self.client.nick.nick)
+        self.assertTrue(channel.is_attached)
 
     def test_client_handles_parting_channel(self):
         channel = self.client.add_channel('#test')
         self.client.read_data(':kylef!kyle@kyle JOIN #test')
         self.client.read_data(':kylef!kyle@kyle PART #test :goodbye')
         self.assertEqual(channel.members, [])
+        self.assertFalse(channel.is_attached)
 
     def test_client_handles_parting_channel_without_reason(self):
         channel = self.client.add_channel('#test')

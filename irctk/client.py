@@ -253,8 +253,8 @@ class Client:
         if self.channel_find_membership(channel, membership.nick):
             return
 
-        if membership.nick == self.nick:
-            channel.is_active = True
+        if self.irc_equal(membership.nick.nick, self.nick.nick):
+            channel.is_attached = True
 
         channel.members.append(membership)
 
@@ -263,7 +263,7 @@ class Client:
         if membership:
             channel.members.remove(membership)
 
-            if self.nick == membership.nick:
+            if self.irc_equal(self.nick.nick, membership.nick.nick):
                 channel.leave()
 
             return True
