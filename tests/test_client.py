@@ -1,6 +1,6 @@
 import datetime
 import unittest
-from irctk.tests.mock_client import MockClient as Client
+from tests.mock_client import MockClient as Client
 from irctk.nick import Nick
 from irctk.message import Message
 
