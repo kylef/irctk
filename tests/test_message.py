@@ -69,6 +69,11 @@ class MessageTests(unittest.TestCase):
         self.assertEqual(message.command, 'PRIVMSG')
         self.assertEqual(message.parameters, ['kyle', 'Hello World'])
 
+    def test_parsing_message_with_command(self):
+        message = Message.parse('PING')
+
+        self.assertEqual(message.command, 'PING')
+
     def test_message_str(self):
         message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
 

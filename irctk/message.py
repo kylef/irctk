@@ -84,7 +84,11 @@ class Message:
             prefix, string = string.split(' ', 1)
             prefix = prefix[1:]
 
-        command, string = string.split(' ', 1)
+        if ' ' in string:
+            command, string = string.split(' ', 1)
+        else:
+            command = string
+            string = ''
 
         while len(string) != 0:
             if string[0] == ':':
