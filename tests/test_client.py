@@ -2,7 +2,7 @@ import datetime
 import unittest
 from tests.mock_client import MockClient as Client
 from irctk.nick import Nick
-from irctk.message import Message
+from irctk.message import Message, MessageTag
 
 
 class ClientTests(unittest.TestCase):
@@ -310,3 +310,48 @@ class ClientTests(unittest.TestCase):
     def test_client_send_part(self):
         self.client.send_part('#palaver')
         self.assertEqual(self.client.sent_lines, ['PART #palaver'])
+
+    def test_client_send_label_message(self):
+        message = Message(command='PING', parameters=['localhost'])
+        message.tags.append(MessageTag(name='label', value='xx'))
+        future = self.client.send(message)
+        self.assertFalse(future.done())
+
+        self.assertEqual(self.client.sent_lines, ['@label=xx PING localhost'])
+
+        self.client.read_data('@label=xx PONG localhost')
+        self.assertTrue(future.done())
+        self.assertEqual(str(future.result()), '@label=xx PONG localhost')
+
+    def test_client_send_label_message_ack(self):
+        message = Message(command='PONG', parameters=['localhost'])
+        message.tags.append(MessageTag(name='label', value='xx'))
+        future = self.client.send(message)
+        self.assertFalse(future.done())
+
+        self.assertEqual(self.client.sent_lines, ['@label=xx PONG localhost'])
+
+        self.client.read_data('@label=xx :irc.example.com ACK')
+        self.assertTrue(future.done())
+        self.assertEqual(str(future.result()), '@label=xx :irc.example.com ACK')
+
+    def test_client_send_label_message_batch(self):
+        message = Message(command='WHOIS', parameters=['kyle'])
+        message.tags.append(MessageTag(name='label', value='mGhe5V7RTV'))
+        future = self.client.send(message)
+
+        self.assertEqual(self.client.sent_lines, ['@label=mGhe5V7RTV WHOIS kyle'])
+
+        self.client.read_data('@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response')
+        self.client.read_data('@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * :Name')
+        self.client.read_data('@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.')
+        self.assertFalse(future.done())
+
+        self.client.read_data(':irc.example.com BATCH -NMzYSq45x')
+        self.assertTrue(future.done())
+        self.assertEqual([str(m) for m in future.result()], [
+            '@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response',
+            '@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * Name',
+            '@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.',
+            ':irc.example.com BATCH -NMzYSq45x',
+        ])

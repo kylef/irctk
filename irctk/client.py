@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Dict, Optional, NamedTuple
 import datetime
 import string
 import asyncio
@@ -8,6 +8,17 @@ from irctk.isupport import ISupport
 from irctk.nick import Nick
 from irctk.channel import Channel, Membership
 from irctk.message import Message
+
+
+def find_tag(name: str, message: Message):
+    for tag in message.tags:
+        if tag.name == name:
+            return tag.value
+
+
+class Request(NamedTuple):
+    message: Message
+    future: asyncio.Future
 
 
 class IRCIgnoreLine(Exception):
@@ -50,6 +61,10 @@ class Client:
         self.cap_pending: List[str] = []
 
         self.modules: List = []
+
+        self.requests: List[Request] = []
+
+        self.batches: Dict[str, List[Message]] = {}
 
     async def connect(self, host: str, port: int, use_tls: bool = False, loop=None):
         """
@@ -248,6 +263,13 @@ class Client:
 
         self.send_line(str(message))
 
+        if find_tag('label', message):
+            loop = asyncio.get_event_loop()
+            future = loop.create_future()
+
+            self.requests.append(Request(message=message, future=future))
+            return future
+
     def authenticate(self):
         if not self.is_registered:
             self.send('CAP', 'LS')
@@ -306,10 +328,40 @@ class Client:
         message = Message.parse(line)
         self.irc_message(message)
 
+        if message.command == 'BATCH' and len(message.parameters) > 0:
+            if message.parameters[0].startswith('+'):
+                reference_tag = message.parameters[0][1:]
+                self.batches[reference_tag] = [message]
+            elif message.parameters[0].startswith('-'):
+                reference_tag = message.parameters[0][1:]
+
+                if reference_tag in self.batches:
+                    batch = self.batches[reference_tag]
+                    batch.append(message)
+                    del self.batches[reference_tag]
+
+                    label = find_tag('label', batch[0])
+                    for request in self.requests:
+                        if find_tag('label', request.message) == label:
+                            self.requests.remove(request)
+                            request.future.set_result(batch)
+                            break
+
+        reference_tag = find_tag('batch', message)
+        if reference_tag and reference_tag in self.batches:
+            self.batches[reference_tag].append(message)
+
         command = message.command.lower()
         if hasattr(self, 'handle_{}'.format(command)):
             func = getattr(self, 'handle_{}'.format(command))
             func(message)
+
+        label = find_tag('label', message)
+        if label and message.command != 'BATCH':
+            for request in self.requests:
+                if find_tag('label', request.message) == label:
+                    self.requests.remove(request)
+                    request.future.set_result(message)
 
     def handle_001(self, message: Message):
         self.is_registered = True
