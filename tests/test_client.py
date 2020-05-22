@@ -43,44 +43,44 @@ class ClientTests(unittest.TestCase):
         self.assertFalse(self.client.is_registered)
 
     def test_client_is_registered_after_001(self):
-        self.client.read_data(':irc.kylefuller.co.uk 001 kyle :Welcome')
+        self.client.process_line(':irc.kylefuller.co.uk 001 kyle :Welcome')
         self.assertTrue(self.client.is_registered)
 
     def test_client_takes_nick_from_001(self):
-        self.client.read_data(':irc.kylefuller.co.uk 001 kyle5 :Welcome')
+        self.client.process_line(':irc.kylefuller.co.uk 001 kyle5 :Welcome')
         self.assertEqual(self.client.nick.nick, 'kyle5')
 
     def test_client_ignores_message_tags(self):
-        self.client.read_data('@time=bar;foo=x :irc.kylefuller.co.uk 001 kyle :Welcome')
+        self.client.process_line('@time=bar;foo=x :irc.kylefuller.co.uk 001 kyle :Welcome')
         self.assertTrue(self.client.is_registered)
 
     # Ping
 
     def test_client_sends_pong_when_pinged(self):
-        self.client.read_data('PING :hello')
+        self.client.process_line('PING :hello')
         self.assertEqual(self.client.sent_lines, ['PONG hello'])
 
     # Nick Change
 
     def test_clients_handles_nick_change(self):
-        self.client.read_data(':irc.example.com 001 kyle :Welcome')
-        self.client.read_data(':kyle!kyle@cocode.org NICK kyle2')
+        self.client.process_line(':irc.example.com 001 kyle :Welcome')
+        self.client.process_line(':kyle!kyle@cocode.org NICK kyle2')
         self.assertEqual(self.client.nick.nick, 'kyle2')
 
     def test_clients_handles_nick_change_case_insensitive(self):
-        self.client.read_data(':irc.example.com 001 kyle :Welcome')
-        self.client.read_data(':KYLE!kyle@cocode.org NICK kyle2')
+        self.client.process_line(':irc.example.com 001 kyle :Welcome')
+        self.client.process_line(':KYLE!kyle@cocode.org NICK kyle2')
         self.assertEqual(self.client.nick.nick, 'kyle2')
 
     # Handling
 
     def test_client_handles_5_parsing_support(self):
-        self.client.read_data(':irc.kylefuller.co.uk 005 kyle :NICKLEN=5 CHANNELLEN=6')
+        self.client.process_line(':irc.kylefuller.co.uk 005 kyle :NICKLEN=5 CHANNELLEN=6')
         self.assertEqual(self.client.isupport.maximum_nick_length, 5)
         self.assertEqual(self.client.isupport.maximum_channel_length, 6)
 
     def test_client_handles_joining_channel(self):
-        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        self.client.process_line(':kylef!kyle@kyle JOIN #test')
 
         channel = self.client.channels[0]
         self.assertEqual(channel.name, '#test')
@@ -89,89 +89,89 @@ class ClientTests(unittest.TestCase):
 
     def test_client_handles_parting_channel(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kylef!kyle@kyle JOIN #test')
-        self.client.read_data(':kylef!kyle@kyle PART #test :goodbye')
+        self.client.process_line(':kylef!kyle@kyle JOIN #test')
+        self.client.process_line(':kylef!kyle@kyle PART #test :goodbye')
         self.assertEqual(channel.members, [])
         self.assertFalse(channel.is_attached)
 
     def test_client_handles_parting_channel_without_reason(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kylef!kyle@kyle JOIN #test')
-        self.client.read_data(':kylef!kyle@kyle PART #test')
+        self.client.process_line(':kylef!kyle@kyle JOIN #test')
+        self.client.process_line(':kylef!kyle@kyle PART #test')
         self.assertEqual(channel.members, [])
 
     def test_client_handles_quit_removing_from_channel(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kylef!kyle@kyle JOIN #test')
+        self.client.process_line(':kylef!kyle@kyle JOIN #test')
 
-        self.client.read_data(':doe!kyle@kyle JOIN #test')
+        self.client.process_line(':doe!kyle@kyle JOIN #test')
         self.assertEqual(len(channel.members), 2)
 
-        self.client.read_data(':doe!kyle@kyle QUIT :goodbye')
+        self.client.process_line(':doe!kyle@kyle QUIT :goodbye')
         self.assertEqual(len(channel.members), 1)
 
     def test_client_handles_getting_kicked_from_channel(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kylef!kyle@kyle JOIN #test')
-        self.client.read_data(':kylef!kyle@kyle KICK #test kylef :goodbye')
+        self.client.process_line(':kylef!kyle@kyle JOIN #test')
+        self.client.process_line(':kylef!kyle@kyle KICK #test kylef :goodbye')
         self.assertEqual(channel.members, [])
 
     def test_client_handles_channel_new_mode(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +tn')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +tn')
         self.assertTrue(channel.modes['t'])
         self.assertTrue(channel.modes['n'])
 
     def test_client_handles_channel_remove_mode(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +tn')
-        self.client.read_data(':kyle!kyle@kyle MODE #test -tn')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +tn')
+        self.client.process_line(':kyle!kyle@kyle MODE #test -tn')
         self.assertEqual(channel.modes, {})
 
     def test_client_handles_setting_channel_list_mode(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +b cake')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +b snake')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +b cake')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +b snake')
         self.assertEqual(channel.modes['b'], ['cake', 'snake'])
 
     def test_client_handles_removing_channel_list_mode(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +b cake')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +b snake')
-        self.client.read_data(':kyle!kyle@kyle MODE #test -b cake')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +b cake')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +b snake')
+        self.client.process_line(':kyle!kyle@kyle MODE #test -b cake')
         self.assertEqual(channel.modes['b'], ['snake'])
 
     def test_client_handles_removing_channel_list_mode2(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +l 5')
-        self.client.read_data(':kyle!kyle@kyle MODE #test +l 6')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +l 5')
+        self.client.process_line(':kyle!kyle@kyle MODE #test +l 6')
         self.assertEqual(channel.modes['l'], '6')
 
     def test_client_handles_324_mode(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':server 324 kylef #test +nt')
+        self.client.process_line(':server 324 kylef #test +nt')
         self.assertEqual(channel.modes, {'n': True, 't': True})
 
     def test_client_handles_329_creation_date(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':server 329 kylef #test 1358579621')
+        self.client.process_line(':server 329 kylef #test 1358579621')
         self.assertEqual(
             channel.creation_date, datetime.datetime(2013, 1, 19, 7, 13, 41)
         )
 
     def test_client_handles_332_topic(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':server 332 kylef #test :My Awesome Topic')
+        self.client.process_line(':server 332 kylef #test :My Awesome Topic')
         self.assertEqual(channel.topic, 'My Awesome Topic')
 
     def test_client_handles_333_topic(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':server 333 kylef #test james!james@james 1395663680')
+        self.client.process_line(':server 333 kylef #test james!james@james 1395663680')
         self.assertEqual(channel.topic_owner, 'james!james@james')
         self.assertEqual(channel.topic_date, datetime.datetime(2014, 3, 24, 12, 21, 20))
 
     def test_client_handles_352(self):
-        self.client.read_data(
+        self.client.process_line(
             ':server 352 kylef * ~doe example.com irc-eu-1.darkscience.net kylef Hs :0 irctk'
         )
         self.assertEqual(self.client.nick.ident, '~doe')
@@ -179,7 +179,7 @@ class ClientTests(unittest.TestCase):
 
     def test_client_handles_353_names(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(
+        self.client.process_line(
             ':server 353 kylef = #test :Derecho!der@der +Tempest!tmp@tmp dijit +other'
         )
         self.assertEqual(len(channel.members), 4)
@@ -192,14 +192,14 @@ class ClientTests(unittest.TestCase):
 
     def test_client_updates_to_channel_topic(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle TOPIC #test :Hello World')
+        self.client.process_line(':kyle!kyle@kyle TOPIC #test :Hello World')
         self.assertEqual(channel.topic, 'Hello World')
         self.assertEqual(channel.topic_owner.nick, 'kyle')
 
     def test_client_updates_channel_membership_during_nick_change(self):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle JOIN #test')
-        self.client.read_data(':kyle!kyle@kyle NICK kyle2')
+        self.client.process_line(':kyle!kyle@kyle JOIN #test')
+        self.client.process_line(':kyle!kyle@kyle NICK kyle2')
 
         self.assertEqual(channel.members[0].nick.nick, 'kyle2')
 
@@ -207,8 +207,8 @@ class ClientTests(unittest.TestCase):
         self,
     ):
         channel = self.client.add_channel('#test')
-        self.client.read_data(':kyle!kyle@kyle JOIN #test')
-        self.client.read_data(':KYLE!kyle@kyle NICK kyle2')
+        self.client.process_line(':kyle!kyle@kyle JOIN #test')
+        self.client.process_line(':KYLE!kyle@kyle NICK kyle2')
 
         self.assertEqual(channel.members[0].nick.nick, 'kyle2')
 
@@ -221,26 +221,26 @@ class ClientTests(unittest.TestCase):
     def test_client_ends_capabilities_negotiation_after_no_caps(self):
         self.client.authenticate()
         self.client.sent_lines = []  # reset, we dont care about auth stuff
-        self.client.read_data(':barjavel.freenode.net CAP * LS :unknown-capability')
+        self.client.process_line(':barjavel.freenode.net CAP * LS :unknown-capability')
         self.assertEqual(self.client.sent_lines, ['CAP END'])
 
     def test_client_requests_multi_prefix_capability(self):
         self.client.authenticate()
         self.client.sent_lines = []  # reset, we dont care about auth stuff
-        self.client.read_data(':barjavel.freenode.net CAP * LS :multi-prefix')
+        self.client.process_line(':barjavel.freenode.net CAP * LS :multi-prefix')
         self.assertEqual(self.client.sent_lines, ['CAP REQ multi-prefix'])
         self.client.sent_lines = []
-        self.client.read_data(':barjavel.freenode.net CAP * ACK :multi-prefix')
+        self.client.process_line(':barjavel.freenode.net CAP * ACK :multi-prefix')
         self.assertEqual(self.client.sent_lines, ['CAP END'])
         self.assertEqual(self.client.cap_accepted, ['multi-prefix'])
 
     def test_client_requests_multi_prefix_capability_and_handles_rejection(self):
         self.client.authenticate()
         self.client.sent_lines = []  # reset, we dont care about auth stuff
-        self.client.read_data(':barjavel.freenode.net CAP * LS :multi-prefix')
+        self.client.process_line(':barjavel.freenode.net CAP * LS :multi-prefix')
         self.assertEqual(self.client.sent_lines, ['CAP REQ multi-prefix'])
         self.client.sent_lines = []
-        self.client.read_data(':barjavel.freenode.net CAP * NAK :multi-prefix')
+        self.client.process_line(':barjavel.freenode.net CAP * NAK :multi-prefix')
         self.assertEqual(self.client.sent_lines, ['CAP END'])
         self.assertEqual(self.client.cap_accepted, [])
 
@@ -266,15 +266,15 @@ class ClientTests(unittest.TestCase):
     # Delegate
 
     def test_client_forwards_private_messages_to_delegate(self):
-        self.client.read_data(':bob!b@irc.kylefuller.co.uk PRIVMSG kylef :Hey')
+        self.client.process_line(':bob!b@irc.kylefuller.co.uk PRIVMSG kylef :Hey')
         self.assertEqual(
             self.private_messages,
             [(self.client, Nick.parse('bob!b@irc.kylefuller.co.uk'), 'Hey')],
         )
 
     def test_client_forwards_channel_messages_to_delegate(self):
-        self.client.read_data(':kylef!b@irc.kylefuller.co.uk JOIN #example')
-        self.client.read_data(':bob!b@irc.kylefuller.co.uk PRIVMSG #example :Hey')
+        self.client.process_line(':kylef!b@irc.kylefuller.co.uk JOIN #example')
+        self.client.process_line(':bob!b@irc.kylefuller.co.uk PRIVMSG #example :Hey')
 
         self.assertEqual(len(self.channel_messages), 1)
         self.assertEqual(self.channel_messages[0][1].nick, 'bob')
@@ -319,7 +319,7 @@ class ClientTests(unittest.TestCase):
 
         self.assertEqual(self.client.sent_lines, ['@label=xx PING localhost'])
 
-        self.client.read_data('@label=xx PONG localhost')
+        self.client.process_line('@label=xx PONG localhost')
         self.assertTrue(future.done())
         self.assertEqual(str(future.result()), '@label=xx PONG localhost')
 
@@ -331,7 +331,7 @@ class ClientTests(unittest.TestCase):
 
         self.assertEqual(self.client.sent_lines, ['@label=xx PONG localhost'])
 
-        self.client.read_data('@label=xx :irc.example.com ACK')
+        self.client.process_line('@label=xx :irc.example.com ACK')
         self.assertTrue(future.done())
         self.assertEqual(str(future.result()), '@label=xx :irc.example.com ACK')
 
@@ -342,12 +342,12 @@ class ClientTests(unittest.TestCase):
 
         self.assertEqual(self.client.sent_lines, ['@label=mGhe5V7RTV WHOIS kyle'])
 
-        self.client.read_data('@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response')
-        self.client.read_data('@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * :Name')
-        self.client.read_data('@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.')
+        self.client.process_line('@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response')
+        self.client.process_line('@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * :Name')
+        self.client.process_line('@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.')
         self.assertFalse(future.done())
 
-        self.client.read_data(':irc.example.com BATCH -NMzYSq45x')
+        self.client.process_line(':irc.example.com BATCH -NMzYSq45x')
         self.assertTrue(future.done())
         self.assertEqual([str(m) for m in future.result()], [
             '@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response',

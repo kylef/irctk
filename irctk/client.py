@@ -82,14 +82,26 @@ class Client:
             self.irc_disconnected(exception)
             return
 
+        await self.connected()
+
+    async def read(self) -> Optional[Message]:
+        raw_message = await self.reader.readline()
+        if not raw_message:
+            return None
+
+        line = raw_message.decode('utf-8').strip()
+        self.logger.debug('S: {}'.format(line))
+        return Message.parse(line)
+
+    async def connected(self):
         self.is_connected = True
         self.authenticate()
         await self.writer.drain()
 
         while self.is_connected:
-            raw_message = await self.reader.readline()
+            message = await self.read()
 
-            if not raw_message:
+            if not message:
                 self.is_registered = False
                 self.is_connected = False
                 self.writer.close()
@@ -97,7 +109,7 @@ class Client:
                 self.logger.info('Disconnected')
                 return
 
-            self.read_data(raw_message.decode('utf-8'))
+            self.process_message(message)
             await self.writer.drain()
 
     # Variables
@@ -316,16 +328,15 @@ class Client:
 
     # Handle IRC lines
 
-    def read_data(self, data: str):
-        line = data.strip()
-        self.logger.debug('S: {}'.format(line))
+    def process_line(self, line: str):
+        return self.process_message(Message.parse(line))
 
+    def process_message(self, message: Message):
         try:
-            self.irc_raw(line)
+            self.irc_raw(str(message))
         except IRCIgnoreLine:
             return
 
-        message = Message.parse(line)
         self.irc_message(message)
 
         if message.command == 'BATCH' and len(message.parameters) > 0:
@@ -352,8 +363,8 @@ class Client:
             self.batches[reference_tag].append(message)
 
         command = message.command.lower()
-        if hasattr(self, 'handle_{}'.format(command)):
-            func = getattr(self, 'handle_{}'.format(command))
+        if hasattr(self, 'process_{}'.format(command)):
+            func = getattr(self, 'process_{}'.format(command))
             func(message)
 
         label = find_tag('label', message)
@@ -363,34 +374,34 @@ class Client:
                     self.requests.remove(request)
                     request.future.set_result(message)
 
-    def handle_001(self, message: Message):
+    def process_001(self, message: Message):
         self.is_registered = True
         self.nick.nick = message.parameters[0]
 
         self.send('WHO', self.nick)
         self.irc_registered()
 
-    def handle_005(self, message: Message):
+    def process_005(self, message: Message):
         self.isupport.parse(message.parameters[1])
 
-    def handle_324(self, message: Message):  # MODE
+    def process_324(self, message: Message):  # MODE
         channel = self.find_channel(message.get(1))
         if channel:
             channel.modes = {}
             channel.mode_change(' '.join(message.parameters[2:]), self.isupport)
 
-    def handle_329(self, message: Message):
+    def process_329(self, message: Message):
         channel = self.find_channel(message.get(1))
         timestamp = message.get(2)
         if channel and timestamp:
             channel.creation_date = datetime.datetime.fromtimestamp(int(timestamp))
 
-    def handle_332(self, message: Message):
+    def process_332(self, message: Message):
         channel = self.find_channel(message.get(1))
         if channel:
             channel.topic = message.get(2)
 
-    def handle_333(self, message: Message):
+    def process_333(self, message: Message):
         channel = self.find_channel(message.get(1))
         if channel:
             channel.topic_owner = message.get(2)
@@ -400,18 +411,18 @@ class Client:
                 channel.topic_date = datetime.datetime.fromtimestamp(int(topic_date))
 
     # RPL_WHOREPLY
-    def handle_352(self, message: Message):
+    def process_352(self, message: Message):
         nick = message.get(5)
 
         if nick and self.irc_equal(self.nick.nick, nick):
             self.nick.ident = message.get(2)
             self.nick.host = message.get(3)
 
-    def handle_432(self, message: Message):
+    def process_432(self, message: Message):
         # Erroneous Nickname: Illegal characters
-        self.handle_433(message)
+        self.process_433(message)
 
-    def handle_433(self, message: Message):
+    def process_433(self, message: Message):
         # Nickname is already in use
         if not self.is_registered:
             self.send('NICK', self.get_alt_nickname())
@@ -429,7 +440,7 @@ class Client:
             return Membership(self.nick_class.parse(nick))
         return Membership(self.nick_class(nick=nick))
 
-    def handle_353(self, message: Message):
+    def process_353(self, message: Message):
         channel = self.find_channel(message.get(2))
         users = message.get(3)
         if channel and users:
@@ -437,10 +448,10 @@ class Client:
                 membership = self.names_353_to_membership(user)
                 self.channel_add_membership(channel, membership)
 
-    def handle_ping(self, message: Message):
+    def process_ping(self, message: Message):
         self.send('PONG', ' '.join(message.parameters))
 
-    def handle_cap(self, message: Message):
+    def process_cap(self, message: Message):
         command = message.get(1)
         param2 = message.get(2)
         if not param2:
@@ -470,7 +481,7 @@ class Client:
         if not self.cap_pending:
             self.send('CAP', 'END')
 
-    def handle_join(self, message: Message):
+    def process_join(self, message: Message):
         channel_name = message.get(0)
         if not channel_name:
             return
@@ -485,7 +496,7 @@ class Client:
             self.channel_add_nick(channel, nick)
             self.irc_channel_join(nick, channel)
 
-    def handle_part(self, message: Message):
+    def process_part(self, message: Message):
         channel = self.find_channel(message.get(0))
         if channel:
             nick = self.nick_class.parse(message.prefix)
@@ -494,7 +505,7 @@ class Client:
             self.channel_remove_nick(channel, nick)
             self.irc_channel_part(nick, channel, reason)
 
-    def handle_kick(self, message: Message):
+    def process_kick(self, message: Message):
         channel = self.find_channel(message.get(0))
         kicked_nickname = message.get(1)
         if channel and kicked_nickname:
@@ -505,7 +516,7 @@ class Client:
             self.channel_remove_nick(channel, kicked_nick)
             self.irc_channel_kick(nick, channel, reason)
 
-    def handle_topic(self, message: Message):
+    def process_topic(self, message: Message):
         channel = self.find_channel(message.get(0))
         if channel:
             nick = self.nick_class.parse(message.prefix)
@@ -515,7 +526,7 @@ class Client:
 
             self.irc_channel_topic(nick, channel)
 
-    def handle_nick(self, message: Message):
+    def process_nick(self, message: Message):
         nick = self.nick_class.parse(message.prefix)
         new_nick = message.get(0)
         if not new_nick:
@@ -529,7 +540,7 @@ class Client:
                 if self.irc_equal(membership.nick.nick, nick.nick):
                     membership.nick.nick = new_nick
 
-    def handle_privmsg(self, message: Message):
+    def process_privmsg(self, message: Message):
         sender = self.nick_class.parse(message.prefix)
         target = message.get(0)
         text = message.get(1)
@@ -543,7 +554,7 @@ class Client:
             if channel:
                 self.irc_channel_message(sender, channel, text)
 
-    def handle_mode(self, message: Message):
+    def process_mode(self, message: Message):
         subject = message.get(0)
 
         if subject and self.is_channel(subject):
@@ -553,7 +564,7 @@ class Client:
                 mode_line = ' '.join(message.parameters[1:])
                 channel.mode_change(mode_line, self.isupport)
 
-    def handle_quit(self, message: Message):
+    def process_quit(self, message: Message):
         nick = self.nick_class.parse(message.prefix)
         reason = message.get(0)
 
