@@ -355,3 +355,64 @@ class ClientTests(unittest.TestCase):
             '@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.',
             ':irc.example.com BATCH -NMzYSq45x',
         ])
+
+    def test_client_send_nick(self):
+        message = Message(command='NICK', parameters=['newnick'])
+        future = self.client.send(message)
+
+        self.assertFalse(future.done())
+        self.assertEqual(self.client.sent_lines, ['NICK newnick'])
+
+        self.client.process_line(':kylef NICK newnick')
+        self.assertTrue(future.done())
+        self.assertEqual(str(future.result()), ':kylef NICK newnick')
+
+    def test_client_send_nick_no_nickname_given(self):
+        message = Message(command='NICK', parameters=[])
+        future = self.client.send(message)
+
+        self.assertFalse(future.done())
+        self.assertEqual(self.client.sent_lines, ['NICK'])
+
+        self.client.process_line(':example.com 431 kylef :No nickname given')
+        self.assertTrue(future.done())
+
+    def test_client_send_nick_erroneus_nickname(self):
+        message = Message(command='NICK', parameters=['doe'])
+        future = self.client.send(message)
+
+        self.assertFalse(future.done())
+        self.assertEqual(self.client.sent_lines, ['NICK doe'])
+
+        self.client.process_line(':example.com 432 kylef doe :Erroneus nickname')
+        self.assertTrue(future.done())
+
+    def test_client_send_nick_nickname_in_use(self):
+        message = Message(command='NICK', parameters=['doe'])
+        future = self.client.send(message)
+
+        self.assertFalse(future.done())
+        self.assertEqual(self.client.sent_lines, ['NICK doe'])
+
+        self.client.process_line(':example.com 433 kylef doe :Nickname is already in use')
+        self.assertTrue(future.done())
+
+    def test_client_send_nick_nick_collision(self):
+        message = Message(command='NICK', parameters=['doe'])
+        future = self.client.send(message)
+
+        self.assertFalse(future.done())
+        self.assertEqual(self.client.sent_lines, ['NICK doe'])
+
+        self.client.process_line(':example.com 436 kylef doe :Nickname collision KILL')
+        self.assertTrue(future.done())
+
+    def test_client_send_nick_complete_registration(self):
+        message = Message(command='NICK', parameters=['doe'])
+        future = self.client.send(message)
+
+        self.assertFalse(future.done())
+        self.assertEqual(self.client.sent_lines, ['NICK doe'])
+
+        self.client.process_line(':irc.example.com 001 doe :Welcome')
+        self.assertTrue(future.done())

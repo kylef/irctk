@@ -282,6 +282,12 @@ class Client:
             self.requests.append(Request(message=message, future=future))
             return future
 
+        if message.command == 'NICK':
+            loop = asyncio.get_event_loop()
+            future = loop.create_future()
+            self.requests.append(Request(message=message, future=future))
+            return future
+
     def authenticate(self):
         if not self.is_registered:
             self.send('CAP', 'LS')
@@ -378,6 +384,11 @@ class Client:
         self.is_registered = True
         self.nick.nick = message.parameters[0]
 
+        for request in self.requests:
+            if (request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) > 0 and self.irc_equal(self.nick.nick, request.message.parameters[0])):
+                self.requests.remove(request)
+                request.future.set_result(message)
+
         self.send('WHO', self.nick)
         self.irc_registered()
 
@@ -422,10 +433,23 @@ class Client:
         # Erroneous Nickname: Illegal characters
         self.process_433(message)
 
+    def process_436(self, message: Message):
+        # Nickname collision
+        self.process_433(message)
+
     def process_433(self, message: Message):
         # Nickname is already in use
         if not self.is_registered:
             self.send('NICK', self.get_alt_nickname())
+
+        if len(message.parameters) > 1:
+            nick = message.parameters[1]
+
+            for request in self.requests:
+                if (request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) > 0 and self.irc_equal(nick, request.message.parameters[0])):
+                    self.requests.remove(request)
+                    request.future.set_exception(Exception(message))
+                    break
 
     def names_353_to_membership(self, nick):
         for mode, prefix in self.isupport['prefix'].items():
@@ -447,6 +471,13 @@ class Client:
             for user in users.split():
                 membership = self.names_353_to_membership(user)
                 self.channel_add_membership(channel, membership)
+
+    def process_431(self, message: Message):
+        for request in self.requests:
+            if request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) == 0:
+                self.requests.remove(request)
+                request.future.set_exception(Exception(message))
+                break
 
     def process_ping(self, message: Message):
         self.send('PONG', ' '.join(message.parameters))
@@ -539,6 +570,12 @@ class Client:
             for membership in channel.members:
                 if self.irc_equal(membership.nick.nick, nick.nick):
                     membership.nick.nick = new_nick
+
+        for request in self.requests:
+            if (request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) > 0 and self.irc_equal(new_nick, request.message.parameters[0])):
+                self.requests.remove(request)
+                request.future.set_result(message)
+                break
 
     def process_privmsg(self, message: Message):
         sender = self.nick_class.parse(message.prefix)
