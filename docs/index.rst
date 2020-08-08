@@ -11,6 +11,7 @@ Contents:
    nick
    channel
    support
+   numerics
 
 Indices and tables
 ==================
