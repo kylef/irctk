@@ -2,34 +2,37 @@ from typing import List
 import re
 
 
+DEFAULT_ISUPPORT = {
+    'casemapping': 'rfc1459',
+    'chanmodes': {
+        'b': list,
+        'e': list,
+        'I': list,
+        'k': 'arg',
+        'l': 'arg_set',
+        'p': None,
+        's': None,
+        't': None,
+        'i': None,
+        'n': None,
+    },
+    'prefix': {'o': '@', 'v': '+'},
+    'channellen': 200,
+    'chantypes': ['#', '&'],
+    'modes': 3,
+    'nicklen': 9,
+    # Unlimited
+    'topiclen': 0,
+    'kicklen': 0,
+    'modes': 0,
+}
+
+
 class ISupport(dict):
     IRC_ISUPPORT_PREFIX = re.compile(r'^\((.+)\)(.+)$')
 
     def __init__(self):
-        self['casemapping'] = 'rfc1459'
-        self['chanmodes'] = {
-            'b': list,
-            'e': list,
-            'I': list,
-            'k': 'arg',
-            'l': 'arg_set',
-            'p': None,
-            's': None,
-            't': None,
-            'i': None,
-            'n': None,
-        }
-
-        self['prefix'] = {'o': '@', 'v': '+'}
-        self['channellen'] = 200
-        self['chantypes'] = ['#', '&']
-        self['modes'] = 3
-        self['nicklen'] = 9
-
-        # Unlimited
-        self['topiclen'] = 0
-        self['kicklen'] = 0
-        self['modes'] = 0
+        self.update(DEFAULT_ISUPPORT)
 
     def __str__(self):
         values = []
@@ -92,6 +95,15 @@ class ISupport(dict):
     def parse(self, line):
         for pair in line.split():
             if '=' not in pair:
+                if pair.startswith('-'):
+                    key = pair[1:]
+                    if key.lower() in DEFAULT_ISUPPORT:
+                        self[key.lower()] = DEFAULT_ISUPPORT[key.lower()]
+                    elif key in self:
+                        del self[key]
+
+                    continue
+
                 self[pair] = None
                 continue
 

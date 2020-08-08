@@ -76,6 +76,20 @@ class ISupportTests(unittest.TestCase):
         self.support.parse('CHANTYPES=$^')
         self.assertEqual(self.support['chantypes'], ['$', '^'])
 
+    def test_can_parse_removal(self):
+        self.support.parse('MONITOR')
+        assert 'MONITOR' in self.support
+
+        self.support.parse('-MONITOR')
+        assert 'MONITOR' not in self.support
+
+    def test_can_parse_removal_reverts_to_default(self):
+        self.support.parse('CASEMAPPING=ascii')
+        assert self.support.case_mapping == 'ascii'
+
+        self.support.parse('-CASEMAPPING')
+        assert self.support.case_mapping == 'rfc1459'
+
     # Test construction
 
     def test_can_be_converted_to_string(self):
