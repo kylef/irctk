@@ -385,7 +385,12 @@ class Client:
         self.nick.nick = message.parameters[0]
 
         for request in self.requests:
-            if (request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) > 0 and self.irc_equal(self.nick.nick, request.message.parameters[0])):
+            if (
+                request.message.command == 'NICK'
+                and find_tag('label', request.message) is None
+                and len(request.message.parameters) > 0
+                and self.irc_equal(self.nick.nick, request.message.parameters[0])
+            ):
                 self.requests.remove(request)
                 request.future.set_result(message)
 
@@ -446,7 +451,12 @@ class Client:
             nick = message.parameters[1]
 
             for request in self.requests:
-                if (request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) > 0 and self.irc_equal(nick, request.message.parameters[0])):
+                if (
+                    request.message.command == 'NICK'
+                    and find_tag('label', request.message) is None
+                    and len(request.message.parameters) > 0
+                    and self.irc_equal(nick, request.message.parameters[0])
+                ):
                     self.requests.remove(request)
                     request.future.set_exception(Exception(message))
                     break
@@ -474,7 +484,11 @@ class Client:
 
     def process_431(self, message: Message):
         for request in self.requests:
-            if request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) == 0:
+            if (
+                request.message.command == 'NICK'
+                and find_tag('label', request.message) is None
+                and len(request.message.parameters) == 0
+            ):
                 self.requests.remove(request)
                 request.future.set_exception(Exception(message))
                 break
@@ -572,7 +586,12 @@ class Client:
                     membership.nick.nick = new_nick
 
         for request in self.requests:
-            if (request.message.command == 'NICK' and find_tag('label', request.message) is None and len(request.message.parameters) > 0 and self.irc_equal(new_nick, request.message.parameters[0])):
+            if (
+                request.message.command == 'NICK'
+                and find_tag('label', request.message) is None
+                and len(request.message.parameters) > 0
+                and self.irc_equal(new_nick, request.message.parameters[0])
+            ):
                 self.requests.remove(request)
                 request.future.set_result(message)
                 break

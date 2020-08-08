@@ -51,7 +51,9 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(self.client.nick.nick, 'kyle5')
 
     def test_client_ignores_message_tags(self):
-        self.client.process_line('@time=bar;foo=x :irc.kylefuller.co.uk 001 kyle :Welcome')
+        self.client.process_line(
+            '@time=bar;foo=x :irc.kylefuller.co.uk 001 kyle :Welcome'
+        )
         self.assertTrue(self.client.is_registered)
 
     # Ping
@@ -75,7 +77,9 @@ class ClientTests(unittest.TestCase):
     # Handling
 
     def test_client_handles_5_parsing_support(self):
-        self.client.process_line(':irc.kylefuller.co.uk 005 kyle :NICKLEN=5 CHANNELLEN=6')
+        self.client.process_line(
+            ':irc.kylefuller.co.uk 005 kyle :NICKLEN=5 CHANNELLEN=6'
+        )
         self.assertEqual(self.client.isupport.maximum_nick_length, 5)
         self.assertEqual(self.client.isupport.maximum_channel_length, 6)
 
@@ -342,19 +346,28 @@ class ClientTests(unittest.TestCase):
 
         self.assertEqual(self.client.sent_lines, ['@label=mGhe5V7RTV WHOIS kyle'])
 
-        self.client.process_line('@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response')
-        self.client.process_line('@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * :Name')
-        self.client.process_line('@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.')
+        self.client.process_line(
+            '@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response'
+        )
+        self.client.process_line(
+            '@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * :Name'
+        )
+        self.client.process_line(
+            '@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.'
+        )
         self.assertFalse(future.done())
 
         self.client.process_line(':irc.example.com BATCH -NMzYSq45x')
         self.assertTrue(future.done())
-        self.assertEqual([str(m) for m in future.result()], [
-            '@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response',
-            '@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * Name',
-            '@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.',
-            ':irc.example.com BATCH -NMzYSq45x',
-        ])
+        self.assertEqual(
+            [str(m) for m in future.result()],
+            [
+                '@label=mGhe5V7RTV :irc.example.com BATCH +NMzYSq45x labeled-response',
+                '@batch=NMzYSq45x :irc.example.com 311 client nick ~ident host * Name',
+                '@batch=NMzYSq45x :irc.example.com 318 client nick :End of /WHOIS list.',
+                ':irc.example.com BATCH -NMzYSq45x',
+            ],
+        )
 
     def test_client_send_nick(self):
         message = Message(command='NICK', parameters=['newnick'])
@@ -394,7 +407,9 @@ class ClientTests(unittest.TestCase):
         self.assertFalse(future.done())
         self.assertEqual(self.client.sent_lines, ['NICK doe'])
 
-        self.client.process_line(':example.com 433 kylef doe :Nickname is already in use')
+        self.client.process_line(
+            ':example.com 433 kylef doe :Nickname is already in use'
+        )
         self.assertTrue(future.done())
 
     def test_client_send_nick_nick_collision(self):
