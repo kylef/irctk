@@ -101,3 +101,7 @@ class MessageTests(unittest.TestCase):
             str(message),
             '@time=2011-10-19T16:40:51.620Z :doe!doe@example.com PRIVMSG kyle :Hello World',
         )
+
+    def test_message_bytes(self):
+        message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+        self.assertEqual(bytes(message), b'PRIVMSG kyle :Hello World\r\n')

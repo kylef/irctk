@@ -162,6 +162,9 @@ class Message:
 
         return string
 
+    def __bytes__(self):
+        return str(self).encode('utf-8') + b'\r\n'
+
     def get(self, index: int) -> Optional[str]:
         """
         Returns a parameter at index or None
