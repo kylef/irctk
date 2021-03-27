@@ -1,12 +1,12 @@
 import re
-from typing import Optional
+from typing import Any, Optional
 
 
 class Nick(object):
     IRC_USERHOST_REGEX = re.compile(r'^(.*)!(.*)@(.*)$')
 
     @classmethod
-    def parse(cls, userhost):
+    def parse(cls, userhost) -> 'Nick':
         m = cls.IRC_USERHOST_REGEX.match(userhost)
         if m:
             return cls(m.group(1), m.group(2), m.group(3))
@@ -19,13 +19,13 @@ class Nick(object):
         self.ident = ident
         self.host = host
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.nick
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<Nick %s!%s@%s>' % (self.nick, self.ident, self.host)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Nick):
             return False
 

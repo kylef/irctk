@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 class MessageTag:
@@ -13,7 +13,7 @@ class MessageTag:
         )
 
     @classmethod
-    def parse(cls, string: str):
+    def parse(cls, string: str) -> 'MessageTag':
         if string.startswith('+'):
             # FIXME support client tags
             string = string[1:]
@@ -59,7 +59,7 @@ class MessageTag:
 
 class Message:
     @classmethod
-    def parse(cls, string: str):
+    def parse(cls, string: str) -> 'Message':
         """
         Parse an IRC line into a Message instance
 
@@ -116,7 +116,7 @@ class Message:
         self.parameters = parameters or []
         self.colon = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Converts a Message instance into a string
 
@@ -145,7 +145,7 @@ class Message:
             if len(string) > 0:
                 string += ' '
 
-            def parameter_to_string(item):
+            def parameter_to_string(item: Tuple[int, str]) -> str:
                 index = item[0]
                 parameter = item[1]
 
@@ -162,7 +162,7 @@ class Message:
 
         return string
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return str(self).encode('utf-8') + b'\r\n'
 
     def get(self, index: int) -> Optional[str]:

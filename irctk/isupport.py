@@ -1,6 +1,5 @@
-from typing import List
 import re
-
+from typing import List
 
 DEFAULT_ISUPPORT = {
     'casemapping': 'rfc1459',
@@ -34,7 +33,7 @@ class ISupport(dict):
     def __init__(self):
         self.update(DEFAULT_ISUPPORT)
 
-    def __str__(self):
+    def __str__(self) -> str:
         values = []
 
         for key in self:
@@ -58,7 +57,7 @@ class ISupport(dict):
 
         return ' '.join(values)
 
-    def to_str_chanmodes(self):
+    def to_str_chanmodes(self) -> str:
         chanmodes = self.get('chanmodes', {})
         list_args, arg, arg_set, no_args = [], [], [], []
 
@@ -78,7 +77,7 @@ class ISupport(dict):
             map(lambda modes: ''.join(modes), [list_args, arg, arg_set, no_args])
         )
 
-    def to_str_prefix(self):
+    def to_str_prefix(self) -> str:
         prefix = self.get('prefix', {})
 
         modes = ''
@@ -92,7 +91,7 @@ class ISupport(dict):
 
     # Parsing
 
-    def parse(self, line):
+    def parse(self, line: str) -> None:
         for pair in line.split():
             if '=' not in pair:
                 if pair.startswith('-'):
@@ -127,7 +126,7 @@ class ISupport(dict):
             elif key == 'CASEMAPPING':
                 self[key.lower()] = value
 
-    def parse_prefix(self, value):
+    def parse_prefix(self, value: str) -> None:
         self['prefix'] = {}
 
         m = self.IRC_ISUPPORT_PREFIX.match(value)
@@ -135,7 +134,7 @@ class ISupport(dict):
             for x in range(0, len(m.group(1))):
                 self['prefix'][m.group(1)[x]] = m.group(2)[x]
 
-    def parse_chanmodes(self, value):
+    def parse_chanmodes(self, value: str) -> None:
         try:
             list_args, arg, arg_set, no_args = value.split(',')
         except ValueError:
@@ -207,7 +206,7 @@ class ISupport(dict):
 
     #
 
-    def is_channel(self, channel_name) -> bool:
+    def is_channel(self, channel_name: str) -> bool:
         """
         Returns True if supplied channel name is a valid channel name.
 

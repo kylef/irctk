@@ -1,19 +1,21 @@
-from typing import List, Dict, Optional, NamedTuple
-import datetime
-import string
 import asyncio
+import datetime
 import logging
+import string
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 
-from irctk.isupport import ISupport
-from irctk.nick import Nick
 from irctk.channel import Channel, Membership
+from irctk.isupport import ISupport
 from irctk.message import Message
+from irctk.nick import Nick
 
 
-def find_tag(name: str, message: Message):
+def find_tag(name: str, message: Message) -> Optional[str]:
     for tag in message.tags:
         if tag.name == name:
             return tag.value
+
+    return None
 
 
 class Request(NamedTuple):
@@ -60,13 +62,15 @@ class Client:
         self.cap_accepted: List[str] = []
         self.cap_pending: List[str] = []
 
-        self.modules: List = []
+        self.modules: List = [Any]
 
         self.requests: List[Request] = []
 
         self.batches: Dict[str, List[Message]] = {}
 
-    async def connect(self, host: str, port: int, use_tls: bool = False, loop=None):
+    async def connect(
+        self, host: str, port: int, use_tls: bool = False, loop=None
+    ) -> None:
         """
         Connect to the IRC server
         """
@@ -93,7 +97,7 @@ class Client:
         self.logger.debug('S: {}'.format(line))
         return Message.parse(line)
 
-    async def connected(self):
+    async def connected(self) -> None:
         self.is_connected = True
         self.authenticate()
         await self.writer.drain()
@@ -143,14 +147,14 @@ class Client:
 
         if self.isupport.case_mapping == 'rfc1459':
 
-            def lower(value: str):
+            def to_lower(value: str) -> str:
                 return (
                     value.lower().replace('[', '{').replace(']', '}').replace('\\', '|')
                 )
 
         elif self.isupport.case_mapping == 'rfc1459-strict':
 
-            def lower(value: str):
+            def to_lower(value: str) -> str:
                 return (
                     value.lower()
                     .replace('[', '{')
@@ -161,15 +165,15 @@ class Client:
 
         elif self.isupport.case_mapping == 'ascii':
 
-            def lower(value: str):
+            def to_lower(value: str) -> str:
                 return value.lower()
 
         else:
             # Unknown case mapping
-            def lower(value: str):
+            def to_lower(value: str) -> str:
                 return value.lower()
 
-        return lower(lhs) == lower(rhs)
+        return to_lower(lhs) == to_lower(rhs)
 
     # Channels
 
@@ -200,7 +204,7 @@ class Client:
 
     # Socket
 
-    def quit(self, message: str = 'Disconnected'):
+    def quit(self, message: str = 'Disconnected') -> None:
         """
         Disconnects from IRC and closes the connection. Accepts an optional
         reason.
@@ -208,7 +212,7 @@ class Client:
         self.send("QUIT", message)
         self.writer.close()
 
-    def send_privmsg(self, target, message: str):
+    def send_privmsg(self, target, message: str) -> None:
         """
         Sends a private message to a target.
 
@@ -220,7 +224,7 @@ class Client:
 
         self.send_line('PRIVMSG {} :{}'.format(target, message))
 
-    def send_join(self, channel, key: str = None):
+    def send_join(self, channel, key: str = None) -> None:
         """
         Sends a JOIN channel command.
 
@@ -232,7 +236,7 @@ class Client:
         else:
             self.send_line('JOIN {}'.format(channel))
 
-    def send_part(self, channel):
+    def send_part(self, channel) -> None:
         """
         Sends a PART channel command.
 
@@ -241,7 +245,7 @@ class Client:
 
         self.send_line('PART {}'.format(channel))
 
-    def send_line(self, line: str):
+    def send_line(self, line: str) -> None:
         """
         Sends a raw line to IRC
 
@@ -252,7 +256,9 @@ class Client:
         self.logger.debug('C: {}'.format(line))
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
-    def send(self, message_or_command, *parameters, colon: bool = False):
+    def send(
+        self, message_or_command: Union[str, Message], *parameters, colon: bool = False
+    ):
         """
         Send an IRC message
 
@@ -288,7 +294,9 @@ class Client:
             self.requests.append(Request(message=message, future=future))
             return future
 
-    def authenticate(self):
+        return None
+
+    def authenticate(self) -> None:
         if not self.is_registered:
             self.send('CAP', 'LS')
 
@@ -303,10 +311,10 @@ class Client:
 
     # Channel
 
-    def channel_add_nick(self, channel, nick):
+    def channel_add_nick(self, channel: Channel, nick: Nick) -> None:
         self.channel_add_membership(channel, Membership(nick))
 
-    def channel_add_membership(self, channel, membership):
+    def channel_add_membership(self, channel: Channel, membership: Membership) -> None:
         if self.channel_find_membership(channel, membership.nick):
             return
 
@@ -315,7 +323,7 @@ class Client:
 
         channel.members.append(membership)
 
-    def channel_remove_nick(self, channel, nick):
+    def channel_remove_nick(self, channel: Channel, nick: Nick) -> bool:
         membership = self.channel_find_membership(channel, nick)
         if membership:
             channel.members.remove(membership)
@@ -327,17 +335,21 @@ class Client:
 
         return False
 
-    def channel_find_membership(self, channel, nick):
+    def channel_find_membership(
+        self, channel: Channel, nick: Nick
+    ) -> Optional[Membership]:
         for membership in channel.members:
             if self.irc_equal(membership.nick.nick, str(nick)):
                 return membership
 
+        return None
+
     # Handle IRC lines
 
-    def process_line(self, line: str):
-        return self.process_message(Message.parse(line))
+    def process_line(self, line: str) -> None:
+        self.process_message(Message.parse(line))
 
-    def process_message(self, message: Message):
+    def process_message(self, message: Message) -> None:
         try:
             self.irc_raw(str(message))
         except IRCIgnoreLine:
@@ -364,9 +376,9 @@ class Client:
                             request.future.set_result(batch)
                             break
 
-        reference_tag = find_tag('batch', message)
-        if reference_tag and reference_tag in self.batches:
-            self.batches[reference_tag].append(message)
+        batch_tag = find_tag('batch', message)
+        if batch_tag and batch_tag in self.batches:
+            self.batches[batch_tag].append(message)
 
         command = message.command.lower()
         if hasattr(self, 'process_{}'.format(command)):
@@ -380,7 +392,7 @@ class Client:
                     self.requests.remove(request)
                     request.future.set_result(message)
 
-    def process_001(self, message: Message):
+    def process_001(self, message: Message) -> None:
         self.is_registered = True
         self.nick.nick = message.parameters[0]
 
@@ -397,27 +409,27 @@ class Client:
         self.send('WHO', self.nick)
         self.irc_registered()
 
-    def process_005(self, message: Message):
+    def process_005(self, message: Message) -> None:
         self.isupport.parse(message.parameters[1])
 
-    def process_324(self, message: Message):  # MODE
+    def process_324(self, message: Message) -> None:  # MODE
         channel = self.find_channel(message.get(1))
         if channel:
             channel.modes = {}
             channel.mode_change(' '.join(message.parameters[2:]), self.isupport)
 
-    def process_329(self, message: Message):
+    def process_329(self, message: Message) -> None:
         channel = self.find_channel(message.get(1))
         timestamp = message.get(2)
         if channel and timestamp:
             channel.creation_date = datetime.datetime.fromtimestamp(int(timestamp))
 
-    def process_332(self, message: Message):
+    def process_332(self, message: Message) -> None:
         channel = self.find_channel(message.get(1))
         if channel:
             channel.topic = message.get(2)
 
-    def process_333(self, message: Message):
+    def process_333(self, message: Message) -> None:
         channel = self.find_channel(message.get(1))
         if channel:
             channel.topic_owner = message.get(2)
@@ -427,22 +439,22 @@ class Client:
                 channel.topic_date = datetime.datetime.fromtimestamp(int(topic_date))
 
     # RPL_WHOREPLY
-    def process_352(self, message: Message):
+    def process_352(self, message: Message) -> None:
         nick = message.get(5)
 
         if nick and self.irc_equal(self.nick.nick, nick):
             self.nick.ident = message.get(2)
             self.nick.host = message.get(3)
 
-    def process_432(self, message: Message):
+    def process_432(self, message: Message) -> None:
         # Erroneous Nickname: Illegal characters
         self.process_433(message)
 
-    def process_436(self, message: Message):
+    def process_436(self, message: Message) -> None:
         # Nickname collision
         self.process_433(message)
 
-    def process_433(self, message: Message):
+    def process_433(self, message: Message) -> None:
         # Nickname is already in use
         if not self.is_registered:
             self.send('NICK', self.get_alt_nickname())
@@ -461,7 +473,7 @@ class Client:
                     request.future.set_exception(Exception(message))
                     break
 
-    def names_353_to_membership(self, nick):
+    def names_353_to_membership(self, nick: str) -> Membership:
         for mode, prefix in self.isupport['prefix'].items():
             if nick.startswith(prefix):
                 nickname = nick[len(mode) :]
@@ -474,7 +486,7 @@ class Client:
             return Membership(self.nick_class.parse(nick))
         return Membership(self.nick_class(nick=nick))
 
-    def process_353(self, message: Message):
+    def process_353(self, message: Message) -> None:
         channel = self.find_channel(message.get(2))
         users = message.get(3)
         if channel and users:
@@ -482,7 +494,7 @@ class Client:
                 membership = self.names_353_to_membership(user)
                 self.channel_add_membership(channel, membership)
 
-    def process_431(self, message: Message):
+    def process_431(self, message: Message) -> None:
         for request in self.requests:
             if (
                 request.message.command == 'NICK'
@@ -493,10 +505,10 @@ class Client:
                 request.future.set_exception(Exception(message))
                 break
 
-    def process_ping(self, message: Message):
+    def process_ping(self, message: Message) -> None:
         self.send('PONG', ' '.join(message.parameters))
 
-    def process_cap(self, message: Message):
+    def process_cap(self, message: Message) -> None:
         command = message.get(1)
         param2 = message.get(2)
         if not param2:
@@ -526,7 +538,7 @@ class Client:
         if not self.cap_pending:
             self.send('CAP', 'END')
 
-    def process_join(self, message: Message):
+    def process_join(self, message: Message) -> None:
         channel_name = message.get(0)
         if not channel_name:
             return
@@ -541,7 +553,7 @@ class Client:
             self.channel_add_nick(channel, nick)
             self.irc_channel_join(nick, channel)
 
-    def process_part(self, message: Message):
+    def process_part(self, message: Message) -> None:
         channel = self.find_channel(message.get(0))
         if channel:
             nick = self.nick_class.parse(message.prefix)
@@ -550,7 +562,7 @@ class Client:
             self.channel_remove_nick(channel, nick)
             self.irc_channel_part(nick, channel, reason)
 
-    def process_kick(self, message: Message):
+    def process_kick(self, message: Message) -> None:
         channel = self.find_channel(message.get(0))
         kicked_nickname = message.get(1)
         if channel and kicked_nickname:
@@ -561,7 +573,7 @@ class Client:
             self.channel_remove_nick(channel, kicked_nick)
             self.irc_channel_kick(nick, channel, reason)
 
-    def process_topic(self, message: Message):
+    def process_topic(self, message: Message) -> None:
         channel = self.find_channel(message.get(0))
         if channel:
             nick = self.nick_class.parse(message.prefix)
@@ -571,7 +583,7 @@ class Client:
 
             self.irc_channel_topic(nick, channel)
 
-    def process_nick(self, message: Message):
+    def process_nick(self, message: Message) -> None:
         nick = self.nick_class.parse(message.prefix)
         new_nick = message.get(0)
         if not new_nick:
@@ -596,7 +608,7 @@ class Client:
                 request.future.set_result(message)
                 break
 
-    def process_privmsg(self, message: Message):
+    def process_privmsg(self, message: Message) -> None:
         sender = self.nick_class.parse(message.prefix)
         target = message.get(0)
         text = message.get(1)
@@ -610,7 +622,7 @@ class Client:
             if channel:
                 self.irc_channel_message(sender, channel, text)
 
-    def process_mode(self, message: Message):
+    def process_mode(self, message: Message) -> None:
         subject = message.get(0)
 
         if subject and self.is_channel(subject):
@@ -620,7 +632,7 @@ class Client:
                 mode_line = ' '.join(message.parameters[1:])
                 channel.mode_change(mode_line, self.isupport)
 
-    def process_quit(self, message: Message):
+    def process_quit(self, message: Message) -> None:
         nick = self.nick_class.parse(message.prefix)
         reason = message.get(0)
 
@@ -636,8 +648,10 @@ class Client:
             if isinstance(module, DelegateModule):
                 return module.delegate
 
+        return None
+
     @delegate.setter
-    def delegate(self, delegate):
+    def delegate(self, delegate) -> None:
         for module in self.modules:
             if isinstance(module, DelegateModule):
                 module.delegate = delegate
@@ -645,114 +659,120 @@ class Client:
 
         self.modules.append(DelegateModule(delegate))
 
-    def irc_disconnected(self, error: Optional[Exception]):
+    def irc_disconnected(self, error: Optional[Exception]) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_disconnected'):
                 module.irc_disconnected(self, error)
 
-    def irc_registered(self):
+    def irc_registered(self) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_registered'):
                 module.irc_registered(self)
 
-    def irc_raw(self, line: str):
+    def irc_raw(self, line: str) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_raw'):
                 module.irc_raw(self, line)
 
-    def irc_message(self, message: Message):
+    def irc_message(self, message: Message) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_message'):
                 module.irc_message(self, message)
 
-    def irc_private_message(self, nick: Nick, message: str):
+    def irc_private_message(self, nick: Nick, message: str) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_private_message'):
                 module.irc_private_message(self, nick, message)
 
-    def irc_channel_message(self, nick: Nick, channel: Channel, message: str):
+    def irc_channel_message(self, nick: Nick, channel: Channel, message: str) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_channel_message'):
                 module.irc_channel_message(self, nick, channel, message)
 
-    def irc_channel_join(self, nick: Nick, channel: Channel):
+    def irc_channel_join(self, nick: Nick, channel: Channel) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_channel_join'):
                 module.irc_channel_join(self, nick, channel)
 
-    def irc_channel_quit(self, nick: Nick, channel: Channel, message: Optional[str]):
+    def irc_channel_quit(
+        self, nick: Nick, channel: Channel, message: Optional[str]
+    ) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_channel_quit'):
                 module.irc_channel_quit(self, nick, channel, message)
 
-    def irc_channel_part(self, nick: Nick, channel: Channel, message: Optional[str]):
+    def irc_channel_part(
+        self, nick: Nick, channel: Channel, message: Optional[str]
+    ) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_channel_part'):
                 module.irc_channel_part(self, nick, channel, message)
 
-    def irc_channel_kick(self, nick: Nick, channel: Channel, message: Optional[str]):
+    def irc_channel_kick(
+        self, nick: Nick, channel: Channel, message: Optional[str]
+    ) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_channel_kick'):
                 module.irc_channel_kick(self, nick, channel, message)
 
-    def irc_channel_topic(self, nick: Nick, channel: Channel):
+    def irc_channel_topic(self, nick: Nick, channel: Channel) -> None:
         for module in self.modules:
             if hasattr(module, 'irc_channel_topic'):
                 module.irc_channel_topic(self, nick, channel)
 
 
 class DelegateModule:
-    def __init__(self, delegate):
+    def __init__(self, delegate: Any):
         self.delegate = delegate
 
-    def irc_disconnected(self, client: Client, error: Optional[Exception]):
+    def irc_disconnected(self, client: Client, error: Optional[Exception]) -> None:
         if hasattr(self.delegate, 'irc_disconnected'):
             self.delegate.irc_disconnected(client, error)
 
-    def irc_registered(self, client: Client):
+    def irc_registered(self, client: Client) -> None:
         if hasattr(self.delegate, 'irc_registered'):
             self.delegate.irc_registered(client)
 
-    def irc_raw(self, client: Client, line: str):
+    def irc_raw(self, client: Client, line: str) -> None:
         if hasattr(self.delegate, 'irc_raw'):
             self.delegate.irc_raw(client, line)
 
-    def irc_message(self, client: Client, message: Message):
+    def irc_message(self, client: Client, message: Message) -> None:
         if hasattr(self.delegate, 'irc_message'):
             self.delegate.irc_message(client, message)
 
-    def irc_private_message(self, client: Client, nick: Nick, message: str):
+    def irc_private_message(self, client: Client, nick: Nick, message: str) -> None:
         if hasattr(self.delegate, 'irc_private_message'):
             self.delegate.irc_private_message(client, nick, message)
 
     def irc_channel_message(
         self, client: Client, nick: Nick, channel: Channel, message: str
-    ):
+    ) -> None:
         if hasattr(self.delegate, 'irc_channel_message'):
             self.delegate.irc_channel_message(client, nick, channel, message)
 
-    def irc_channel_join(self, client: Client, nick: Nick, channel: Channel):
+    def irc_channel_join(self, client: Client, nick: Nick, channel: Channel) -> None:
         if hasattr(self.delegate, 'irc_channel_join'):
             self.delegate.irc_channel_join(client, nick, channel)
 
     def irc_channel_quit(
         self, client: Client, nick: Nick, channel: Channel, message: Optional[str]
-    ):
+    ) -> None:
         if hasattr(self.delegate, 'irc_channel_quit'):
             self.delegate.irc_channel_quit(client, nick, channel, message)
 
     def irc_channel_part(
         self, client: Client, nick: Nick, channel, message: Optional[str]
-    ):
+    ) -> None:
         if hasattr(self.delegate, 'irc_channel_part'):
             self.delegate.irc_channel_part(client, nick, channel, message)
 
     def irc_channel_kick(
         self, client: Client, nick: Nick, channel: Channel, message: Optional[str]
-    ):
+    ) -> None:
         if hasattr(self.delegate, 'irc_channel_kick'):
             self.delegate.irc_channel_kick(client, nick, channel, message)
 
-    def irc_channel_topic(self, client: Client, nick: Nick, channel: Channel):
+    def irc_channel_topic(self, client: Client, nick: Nick, channel: Channel) -> None:
         if hasattr(self.delegate, 'irc_channel_topic'):
             self.delegate.irc_channel_topic(client, nick, channel)

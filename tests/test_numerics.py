@@ -1,7 +1,7 @@
 from irctk import numerics
 
 
-def test_rfc1459_error_numerics():
+def test_rfc1459_error_numerics() -> None:
     assert numerics.ERR_NOSUCHNICK == 401
     assert numerics.ERR_NOSUCHSERVER == 402
     assert numerics.ERR_NOSUCHCHANNEL == 403
@@ -48,7 +48,7 @@ def test_rfc1459_error_numerics():
     assert numerics.ERR_USERSDONTMATCH == 502
 
 
-def test_rfc1459_command_numerics():
+def test_rfc1459_command_numerics() -> None:
     assert numerics.RPL_NONE == 300
     assert numerics.RPL_USERHOST == 302
     assert numerics.RPL_ISON == 303
