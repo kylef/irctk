@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import asyncio
+import logging
+
 import irctk
 
 
@@ -26,6 +28,9 @@ class Bot:
 
 
 if __name__ == '__main__':
+    # Enable debug logging
+    logging.basicConfig(level='DEBUG')
+
     bot = Bot()
 
     loop = asyncio.get_event_loop()
