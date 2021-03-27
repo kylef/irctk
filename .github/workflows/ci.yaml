@@ -12,4 +12,4 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install poetry
       - run: poetry install
-      - run: poetry run pytest --cov=irctk --mypy --doctest-modules tests
+      - run: poetry run pytest --cov=irctk --mypy --mypy-ignore-missing-imports --doctest-modules tests
