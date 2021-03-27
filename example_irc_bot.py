@@ -11,16 +11,16 @@ class Bot:
         await client.connect(hostname, port, secure)
 
     def irc_registered(self, client):
-        channel = client.add_channel('#test')
-        channel.join()
+        client.send('MODE', client.nick, '+B')
+        client.send('JOIN', '#test')
 
     def irc_private_message(self, client, nick, message):
         if message == 'ping':
-            nick.send('pong')
+            client.send('PRIVMSG', nick, 'pong')
 
     def irc_channel_message(self, client, nick, channel, message):
         if message == 'ping':
-            channel.send('{}: pong'.format(nick))
+            client.send('PRIVMSG', channel, f'{nick}: pong')
         elif message == 'quit':
             client.quit()
 
