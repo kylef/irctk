@@ -1,9 +1,6 @@
 irc-toolkit
 ===========
 
-[![Build Status](http://img.shields.io/travis/kylef/irctk/master.svg?style=flat)](https://travis-ci.org/kylef/irctk)
-[![Test Coverage](http://img.shields.io/coveralls/kylef/irctk/master.svg?style=flat)](https://coveralls.io/r/kylef/irctk)
-
 An IRC client toolkit in Python.
 
 ## Installation
@@ -14,8 +11,19 @@ $ pip install irc-toolkit
 
 ## Usage
 
+There are a few parts of irc-toolkit, depending on your goals.
+[`irctk.Message`](https://irctk.readthedocs.io/en/latest/message.html)
+offers IRC message parsing,
+[`irctk.Client`](https://irctk.readthedocs.io/en/latest/client.html) offers an
+IRC client which handles connection/channel/nick tracking giving you a callback
+based interface for IRC messages, for example:
+
 ```python
+#!/usr/bin/env python
+
 import asyncio
+import logging
+
 import irctk
 
 
@@ -26,23 +34,27 @@ class Bot:
         await client.connect(hostname, port, secure)
 
     def irc_registered(self, client):
-        channel = client.add_channel('#test')
-        channel.join()
+        client.send('MODE', client.nick, '+B')
+        client.send('JOIN', '#test')
 
     def irc_private_message(self, client, nick, message):
         if message == 'ping':
-            nick.send('pong')
+            client.send('PRIVMSG', nick, 'pong')
 
     def irc_channel_message(self, client, nick, channel, message):
         if message == 'ping':
-            channel.send('{}: pong'.format(nick))
+            client.send('PRIVMSG', channel, f'{nick}: pong')
+        elif message == 'quit':
+            client.quit()
 
 
 if __name__ == '__main__':
+    # Enable debug logging
+    logging.basicConfig(level='DEBUG')
+
     bot = Bot()
 
     loop = asyncio.get_event_loop()
-    loop.create_task(bot.connect('chat.freenode.net'))
+    loop.create_task(bot.connect('irc.darkscience.net'))
     loop.run_forever()
 ```
-
