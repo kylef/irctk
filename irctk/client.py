@@ -543,6 +543,7 @@ class Client:
         if not channel_name:
             return
 
+        assert message.prefix
         nick = self.nick_class.parse(message.prefix)
         channel = self.find_channel(channel_name)
 
@@ -556,6 +557,7 @@ class Client:
     def process_part(self, message: Message) -> None:
         channel = self.find_channel(message.get(0))
         if channel:
+            assert message.prefix
             nick = self.nick_class.parse(message.prefix)
             reason = message.get(1)
 
@@ -569,6 +571,7 @@ class Client:
             kicked_nick = self.nick_class(nick=kicked_nickname)
             reason = message.get(2)
 
+            assert message.prefix
             nick = self.nick_class.parse(message.prefix)
             self.channel_remove_nick(channel, kicked_nick)
             self.irc_channel_kick(nick, channel, reason)
@@ -576,6 +579,7 @@ class Client:
     def process_topic(self, message: Message) -> None:
         channel = self.find_channel(message.get(0))
         if channel:
+            assert message.prefix
             nick = self.nick_class.parse(message.prefix)
             channel.topic = message.get(1)
             channel.topic_owner = nick
@@ -584,6 +588,7 @@ class Client:
             self.irc_channel_topic(nick, channel)
 
     def process_nick(self, message: Message) -> None:
+        assert message.prefix
         nick = self.nick_class.parse(message.prefix)
         new_nick = message.get(0)
         if not new_nick:
@@ -609,6 +614,7 @@ class Client:
                 break
 
     def process_privmsg(self, message: Message) -> None:
+        assert message.prefix
         sender = self.nick_class.parse(message.prefix)
         target = message.get(0)
         text = message.get(1)
@@ -633,6 +639,7 @@ class Client:
                 channel.mode_change(mode_line, self.isupport)
 
     def process_quit(self, message: Message) -> None:
+        assert message.prefix
         nick = self.nick_class.parse(message.prefix)
         reason = message.get(0)
 

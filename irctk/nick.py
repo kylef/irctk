@@ -6,7 +6,7 @@ class Nick(object):
     IRC_USERHOST_REGEX = re.compile(r'^(.*)!(.*)@(.*)$')
 
     @classmethod
-    def parse(cls, userhost) -> 'Nick':
+    def parse(cls, userhost: str) -> 'Nick':
         m = cls.IRC_USERHOST_REGEX.match(userhost)
         if m:
             return cls(m.group(1), m.group(2), m.group(3))

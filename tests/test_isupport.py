@@ -1,103 +1,128 @@
 import unittest
 
+import pytest
+
 from irctk.isupport import ISupport
 
 
-class ISupportTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.support = ISupport()
+@pytest.fixture()
+def isupport() -> ISupport:
+    return ISupport()
 
-    # Defaults
 
-    def test_default_maximum_nick_length(self) -> None:
-        self.assertEqual(self.support.maximum_nick_length, 9)
+# Defaults
 
-    def test_default_maximum_channel_length(self) -> None:
-        self.assertEqual(self.support.maximum_channel_length, 200)
 
-    def test_default_channel_prefixes(self) -> None:
-        self.assertEqual(self.support.channel_prefixes, ['#', '&'])
+def test_default_maximum_nick_length(isupport: ISupport) -> None:
+    assert isupport.maximum_nick_length == 9
 
-    def test_default_user_channel_modes(self) -> None:
-        self.assertEqual(self.support['prefix'], {'o': '@', 'v': '+'})
 
-    def test_default_case_mapping(self) -> None:
-        self.assertEqual(self.support.case_mapping, 'rfc1459')
+def test_default_maximum_channel_length(isupport: ISupport) -> None:
+    assert isupport.maximum_channel_length == 200
 
-    # Is channel
 
-    def test_is_channel_disallows_commas(self) -> None:
-        self.assertFalse(self.support.is_channel('#te,st'))
+def test_default_channel_prefixes(isupport: ISupport) -> None:
+    assert isupport.channel_prefixes == ['#', '&']
 
-    def test_is_channel_disallows_spaces(self) -> None:
-        self.assertFalse(self.support.is_channel('#te st'))
 
-    def test_is_channel_allows_channels_with_channel_prefix(self) -> None:
-        self.support['chantypes'] = ['$']
-        self.assertTrue(self.support.is_channel('$test'))
+def test_default_user_channel_modes(isupport: ISupport) -> None:
+    assert isupport['prefix'] == {'o': '@', 'v': '+'}
 
-    def test_is_channel_disallows_chanels_without_channel_prefix(self) -> None:
-        self.assertFalse(self.support.is_channel('$test'))
 
-    def test_is_channel_disallows_channels_exceeding_maximum_length(self) -> None:
-        self.support['channellen'] = 5
-        self.assertFalse(self.support.is_channel('#testing'))
+def test_default_case_mapping(isupport: ISupport) -> None:
+    assert isupport.case_mapping == 'rfc1459'
 
-    # Test parsing
 
-    def test_can_parse_nicklen(self) -> None:
-        self.support.parse('NICKLEN=5')
-        self.assertEqual(self.support.maximum_nick_length, 5)
+# Is channel
 
-    def test_can_parse_channellen(self) -> None:
-        self.support.parse('CHANNELLEN=10')
-        self.assertEqual(self.support.maximum_channel_length, 10)
 
-    def test_can_parse_prefix(self) -> None:
-        self.support.parse('PREFIX=(ohv)$%+')
-        self.assertEqual(self.support['prefix'], {'o': '$', 'h': '%', 'v': '+'})
+def test_is_channel_disallows_commas(isupport: ISupport) -> None:
+    assert not isupport.is_channel('#te,st')
 
-    def test_can_parse_chanmodes(self) -> None:
-        self.support.parse('CHANMODES=ae,bf,cg,dh')
-        self.assertEqual(
-            self.support['chanmodes'],
-            {
-                'a': list,
-                'e': list,
-                'b': 'arg',
-                'f': 'arg',
-                'c': 'arg_set',
-                'g': 'arg_set',
-                'd': None,
-                'h': None,
-            },
-        )
 
-    def test_can_parse_chantypes(self) -> None:
-        self.support.parse('CHANTYPES=$^')
-        self.assertEqual(self.support['chantypes'], ['$', '^'])
+def test_is_channel_disallows_spaces(isupport: ISupport) -> None:
+    assert not isupport.is_channel('#te st')
 
-    def test_can_parse_removal(self) -> None:
-        self.support.parse('MONITOR')
-        assert 'MONITOR' in self.support
 
-        self.support.parse('-MONITOR')
-        assert 'MONITOR' not in self.support
+def test_is_channel_allows_channels_with_channel_prefix(isupport: ISupport) -> None:
+    isupport['chantypes'] = ['$']
+    assert isupport.is_channel('$test')
 
-    def test_can_parse_removal_reverts_to_default(self) -> None:
-        self.support.parse('CASEMAPPING=ascii')
-        assert self.support.case_mapping == 'ascii'
 
-        self.support.parse('-CASEMAPPING')
-        assert self.support.case_mapping == 'rfc1459'
+def test_is_channel_disallows_chanels_without_channel_prefix(
+    isupport: ISupport,
+) -> None:
+    assert not isupport.is_channel('$test')
 
-    # Test construction
 
-    def test_can_be_converted_to_string(self) -> None:
-        line = str(self.support)
+def test_is_channel_disallows_channels_exceeding_maximum_length(
+    isupport: ISupport,
+) -> None:
+    isupport['channellen'] = 5
+    assert not isupport.is_channel('#testing')
 
-        new_support = ISupport()
-        new_support.clear()
-        new_support.parse(line)
 
-        self.assertEqual(new_support, self.support)
+# Test parsing
+
+
+def test_can_parse_nicklen(isupport: ISupport) -> None:
+    isupport.parse('NICKLEN=5')
+    assert isupport.maximum_nick_length == 5
+
+
+def test_can_parse_channellen(isupport: ISupport) -> None:
+    isupport.parse('CHANNELLEN=10')
+    assert isupport.maximum_channel_length == 10
+
+
+def test_can_parse_prefix(isupport: ISupport) -> None:
+    isupport.parse('PREFIX=(ohv)$%+')
+    assert isupport['prefix'] == {'o': '$', 'h': '%', 'v': '+'}
+
+
+def test_can_parse_chanmodes(isupport: ISupport) -> None:
+    isupport.parse('CHANMODES=ae,bf,cg,dh')
+    assert isupport['chanmodes'] == {
+        'a': list,
+        'e': list,
+        'b': 'arg',
+        'f': 'arg',
+        'c': 'arg_set',
+        'g': 'arg_set',
+        'd': None,
+        'h': None,
+    }
+
+
+def test_can_parse_chantypes(isupport: ISupport) -> None:
+    isupport.parse('CHANTYPES=$^')
+    assert isupport['chantypes'] == ['$', '^']
+
+
+def test_can_parse_removal(isupport: ISupport) -> None:
+    isupport.parse('MONITOR')
+    assert 'MONITOR' in isupport
+
+    isupport.parse('-MONITOR')
+    assert 'MONITOR' not in isupport
+
+
+def test_can_parse_removal_reverts_to_default(isupport: ISupport) -> None:
+    isupport.parse('CASEMAPPING=ascii')
+    assert isupport.case_mapping == 'ascii'
+
+    isupport.parse('-CASEMAPPING')
+    assert isupport.case_mapping == 'rfc1459'
+
+
+# Test construction
+
+
+def test_can_be_converted_to_string(isupport: ISupport) -> None:
+    line = str(isupport)
+
+    new_support = ISupport()
+    new_support.clear()
+    new_support.parse(line)
+
+    assert new_support == isupport
