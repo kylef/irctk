@@ -33,6 +33,10 @@ def test_default_case_mapping(isupport: ISupport) -> None:
     assert isupport.case_mapping == 'rfc1459'
 
 
+def test_default_bot_mode(isupport: ISupport) -> None:
+    assert isupport.bot_mode is None
+
+
 # Is channel
 
 
@@ -113,6 +117,17 @@ def test_can_parse_removal_reverts_to_default(isupport: ISupport) -> None:
 
     isupport.parse('-CASEMAPPING')
     assert isupport.case_mapping == 'rfc1459'
+
+
+def test_can_parse_bot_mode(isupport: ISupport) -> None:
+    isupport.parse('BOT=B')
+    assert isupport.bot_mode == 'B'
+
+    isupport.parse('-BOT')
+    assert isupport.bot_mode is None
+
+    isupport.parse('BOT')
+    assert isupport.bot_mode is None
 
 
 # Test construction

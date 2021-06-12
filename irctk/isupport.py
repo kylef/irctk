@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Optional
 
 DEFAULT_ISUPPORT = {
     'casemapping': 'rfc1459',
@@ -125,6 +125,8 @@ class ISupport(dict):
                 self[key.lower()] = int(value)
             elif key == 'CASEMAPPING':
                 self[key.lower()] = value
+            else:
+                self[key] = value
 
     def parse_prefix(self, value: str) -> None:
         self['prefix'] = {}
@@ -229,3 +231,11 @@ class ISupport(dict):
                 return True
 
         return False
+
+    @property
+    def bot_mode(self) -> Optional[str]:
+        """
+        https://ircv3.net/specs/extensions/bot-mode
+        """
+
+        return self.get('BOT')
