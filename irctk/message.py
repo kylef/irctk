@@ -14,8 +14,8 @@ class MessageTag:
 
     @classmethod
     def parse(cls, string: str) -> 'MessageTag':
-        if string.startswith('+'):
-            # FIXME support client tags
+        is_client_only = string.startswith('+')
+        if is_client_only:
             string = string[1:]
 
         vendor = None
@@ -28,17 +28,21 @@ class MessageTag:
         if '/' in string:
             vendor, string = string.split('/', 1)
 
-        return cls(vendor=vendor, name=string, value=value)
+        return cls(is_client_only=is_client_only, vendor=vendor, name=string, value=value)
 
-    def __init__(self, vendor: str = None, name: str = None, value: str = None):
+    def __init__(self, is_client_only: bool = False, vendor: str = None, name: str = None, value: str = None):
+        self.is_client_only = is_client_only
         self.vendor = vendor
         self.name = name
         self.value = value
 
     def __str__(self):
+        assert (self.name)
+
         tag = ''
 
-        # FIXMEif client_only prepend +
+        if self.is_client_only:
+            tag += '+'
 
         if self.vendor:
             tag += self.vendor + '/'

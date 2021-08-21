@@ -32,6 +32,7 @@ def test_parse_value() -> None:
 def test_parse_escaped_value() -> None:
     tag = MessageTag.parse('+example=raw+:=,escaped\\:\\s\\\\')
 
+    assert tag.is_client_only
     assert tag.vendor is None
     assert tag.name == 'example'
     assert tag.value == 'raw+:=,escaped; \\'
