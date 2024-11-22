@@ -69,7 +69,7 @@ class Client:
         self.batches: Dict[str, List[Message]] = {}
 
     async def connect(
-        self, host: str, port: int, use_tls: bool = False, loop=None
+        self, host: str, port: int, use_tls: bool = False
     ) -> None:
         """
         Connect to the IRC server
@@ -78,7 +78,7 @@ class Client:
         self.logger.info('Connecting to {}:{}'.format(host, port))
 
         self.secure = use_tls
-        connection = asyncio.open_connection(host, port, ssl=use_tls, loop=loop)
+        connection = asyncio.open_connection(host, port, ssl=use_tls)
         try:
             self.reader, self.writer = await connection
         except Exception as exception:
