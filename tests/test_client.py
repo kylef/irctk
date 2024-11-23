@@ -309,6 +309,10 @@ class ClientTests(unittest.TestCase):
         self.client.send_privmsg('kyle', 'Hello')
         self.assertEqual(self.client.sent_lines, ['PRIVMSG kyle :Hello'])
 
+    def test_client_send_notice(self) -> None:
+        self.client.send_notice('kyle', 'Hello')
+        self.assertEqual(self.client.sent_lines, ['NOTICE kyle :Hello'])
+
     def test_client_send_join(self) -> None:
         self.client.send_join('#palaver')
         self.assertEqual(self.client.sent_lines, ['JOIN #palaver'])

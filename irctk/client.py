@@ -217,6 +217,18 @@ class Client:
 
         self.send_line('PRIVMSG {} :{}'.format(target, message))
 
+    def send_notice(self, target, message: str) -> None:
+        """
+        Sends a notice message to a target.
+
+        Example::
+
+            >>> client.send_notice('kyle', 'Hi')
+            >>> client.send_notice(channel, 'Hi')
+        """
+
+        self.send_line('NOTICE {} :{}'.format(target, message))
+
     def send_join(self, channel, key: str = None) -> None:
         """
         Sends a JOIN channel command.
