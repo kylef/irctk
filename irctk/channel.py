@@ -10,7 +10,7 @@ class Membership(object):
     Represents a nick membership inside a channnel.
     """
 
-    def __init__(self, nick: Nick, modes: List[str] = None):
+    def __init__(self, nick: Nick, modes: Optional[List[str]] = None):
         self.nick = nick
         self.modes = modes or []
 

@@ -117,10 +117,10 @@ class Message:
 
     def __init__(
         self,
-        tags: List[MessageTag] = None,
-        prefix: str = None,
+        tags: Optional[List[MessageTag]] = None,
+        prefix: Optional[str] = None,
         command: str = '',
-        parameters: List[str] = None,
+        parameters: Optional[List[str]] = None,
     ):
         self.tags = tags or []
         self.prefix = prefix

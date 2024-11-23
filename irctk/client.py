@@ -127,10 +127,7 @@ class Client:
     # CAP
 
     def supports_cap(self, cap: str) -> bool:
-        return cap in [
-            'account-tag',
-            'multi-prefix'
-        ]
+        return cap in ['account-tag', 'multi-prefix']
 
     # Support
 
@@ -184,7 +181,7 @@ class Client:
 
         return None
 
-    def add_channel(self, name: str, key: str = None) -> Channel:
+    def add_channel(self, name: str, key: Optional[str] = None) -> Channel:
         channel = self.find_channel(name)
 
         if not channel:
