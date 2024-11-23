@@ -123,3 +123,29 @@ def test_message_bytes() -> None:
     message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
 
     assert bytes(message) == b'PRIVMSG kyle :Hello World\r\n'
+
+
+def test_message_find_tag() -> None:
+    message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+    message.tags.append(MessageTag(name='account', value='kyle'))
+    message.tags.append(
+        MessageTag(is_client_only=True, vendor='draft', name='reply', value='mid')
+    )
+
+    assert message.find_tag('unknown') is None
+
+    assert message.find_tag('account') is 'kyle'
+    assert message.find_tag('account', vendor='vendor') is None
+    assert message.find_tag('account', is_client_only=True) is None
+
+    assert message.find_tag('reply') is None
+    assert message.find_tag('reply', vendor='draft') is None
+    assert message.find_tag('reply', vendor='draft', is_client_only=True) is 'mid'
+
+
+def test_account() -> None:
+    message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+    assert message.account is None
+
+    message.tags.append(MessageTag(name='account', value='kyle'))
+    assert message.account is 'kyle'

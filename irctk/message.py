@@ -35,9 +35,9 @@ class MessageTag:
     def __init__(
         self,
         is_client_only: bool = False,
-        vendor: str = None,
-        name: str = None,
-        value: str = None,
+        vendor: Optional[str] = None,
+        name: str = '',
+        value: Optional[str] = None,
     ):
         self.is_client_only = is_client_only
         self.vendor = vendor
@@ -191,3 +191,33 @@ class Message:
             return None
 
         return self.parameters[index]
+
+    # Message Tags
+
+    def find_tag(
+        self, name: str, vendor: Optional[str] = None, is_client_only: bool = False
+    ) -> Optional[str]:
+        """
+        Returns the first matching tag or None.
+        """
+
+        for tag in self.tags:
+            if (
+                tag.name == name
+                and tag.vendor == vendor
+                and tag.is_client_only == is_client_only
+            ):
+                return tag.value
+
+        return None
+
+    @property
+    def account(self) -> Optional[str]:
+        """
+        Returns the account sending the message.
+
+        Requires account-tag capability
+        https://ircv3.net/specs/extensions/account-tag to be enabled
+        """
+
+        return self.find_tag('account')
