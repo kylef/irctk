@@ -149,3 +149,19 @@ def test_account() -> None:
 
     message.tags.append(MessageTag(name='account', value='kyle'))
     assert message.account is 'kyle'
+
+
+def test_label() -> None:
+    message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+    assert message.label is None
+
+    message.tags.append(MessageTag(name='label', value='079cda68'))
+    assert message.label is '079cda68'
+
+
+def test_batch() -> None:
+    message = Message(command='PRIVMSG', parameters=['kyle', 'Hello World'])
+    assert message.batch is None
+
+    message.tags.append(MessageTag(name='batch', value='079cda68'))
+    assert message.batch is '079cda68'

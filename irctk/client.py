@@ -10,14 +10,6 @@ from irctk.message import Message
 from irctk.nick import Nick
 
 
-def find_tag(name: str, message: Message) -> Optional[str]:
-    for tag in message.tags:
-        if tag.name == name:
-            return tag.value
-
-    return None
-
-
 class Request(NamedTuple):
     message: Message
     future: asyncio.Future
@@ -40,7 +32,7 @@ class Client:
         nickname: str = 'irctk',
         ident: str = 'irctk',
         realname: str = 'irctk',
-        password: str = None,
+        password: Optional[str] = None,
     ):
         super(Client, self).__init__()
 
@@ -279,7 +271,7 @@ class Client:
 
         self.send_line(str(message))
 
-        if find_tag('label', message):
+        if message.label:
             loop = asyncio.get_event_loop()
             future = loop.create_future()
 
@@ -367,14 +359,14 @@ class Client:
                     batch.append(message)
                     del self.batches[reference_tag]
 
-                    label = find_tag('label', batch[0])
+                    label = batch[0].label
                     for request in self.requests:
-                        if find_tag('label', request.message) == label:
+                        if request.message.label == label:
                             self.requests.remove(request)
                             request.future.set_result(batch)
                             break
 
-        batch_tag = find_tag('batch', message)
+        batch_tag = message.batch
         if batch_tag and batch_tag in self.batches:
             self.batches[batch_tag].append(message)
 
@@ -383,10 +375,10 @@ class Client:
             func = getattr(self, 'process_{}'.format(command))
             func(message)
 
-        label = find_tag('label', message)
+        label = message.label
         if label and message.command != 'BATCH':
             for request in self.requests:
-                if find_tag('label', request.message) == label:
+                if request.message.label == label:
                     self.requests.remove(request)
                     request.future.set_result(message)
 
@@ -397,7 +389,7 @@ class Client:
         for request in self.requests:
             if (
                 request.message.command == 'NICK'
-                and find_tag('label', request.message) is None
+                and request.message.label is None
                 and len(request.message.parameters) > 0
                 and self.irc_equal(self.nick.nick, request.message.parameters[0])
             ):
@@ -463,7 +455,7 @@ class Client:
             for request in self.requests:
                 if (
                     request.message.command == 'NICK'
-                    and find_tag('label', request.message) is None
+                    and request.message.label is None
                     and len(request.message.parameters) > 0
                     and self.irc_equal(nick, request.message.parameters[0])
                 ):
@@ -496,7 +488,7 @@ class Client:
         for request in self.requests:
             if (
                 request.message.command == 'NICK'
-                and find_tag('label', request.message) is None
+                and request.message.label is None
                 and len(request.message.parameters) == 0
             ):
                 self.requests.remove(request)
@@ -603,7 +595,7 @@ class Client:
         for request in self.requests:
             if (
                 request.message.command == 'NICK'
-                and find_tag('label', request.message) is None
+                and request.message.label is None
                 and len(request.message.parameters) > 0
                 and self.irc_equal(new_nick, request.message.parameters[0])
             ):

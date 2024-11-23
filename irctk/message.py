@@ -212,6 +212,28 @@ class Message:
         return None
 
     @property
+    def label(self) -> Optional[str]:
+        """
+        Returns the label this message is in response to.
+
+        Requires labeled-responses capability
+        https://ircv3.net/specs/extensions/labeled-response to be enabled
+        """
+
+        return self.find_tag('label')
+
+    @property
+    def batch(self) -> Optional[str]:
+        """
+        Returns the batch of the message.
+
+        Requires batch capability
+        https://ircv3.net/specs/extensions/batch to be enabled
+        """
+
+        return self.find_tag('batch')
+
+    @property
     def account(self) -> Optional[str]:
         """
         Returns the account sending the message.
