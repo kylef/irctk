@@ -5,6 +5,7 @@ import string
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 from irctk.channel import Channel, Membership
+from irctk.command import Command
 from irctk.isupport import ISupport
 from irctk.message import Message
 from irctk.nick import Nick
@@ -215,7 +216,7 @@ class Client:
             >>> client.send_privmsg(channel, 'Hi')
         """
 
-        self.send_line('PRIVMSG {} :{}'.format(target, message))
+        self.send_line('{} {} :{}'.format(Command.PRIVMSG, target, message))
 
     def send_notice(self, target, message: str) -> None:
         """
@@ -227,9 +228,9 @@ class Client:
             >>> client.send_notice(channel, 'Hi')
         """
 
-        self.send_line('NOTICE {} :{}'.format(target, message))
+        self.send_line('{} {} :{}'.format(Command.NOTICE, target, message))
 
-    def send_join(self, channel, key: str = None) -> None:
+    def send_join(self, channel, key: Optional[str] = None) -> None:
         """
         Sends a JOIN channel command.
 
@@ -237,9 +238,9 @@ class Client:
         """
 
         if key:
-            self.send_line('JOIN {} {}'.format(channel, key))
+            self.send_line('{} {} {}'.format(Command.JOIN, channel, key))
         else:
-            self.send_line('JOIN {}'.format(channel))
+            self.send_line('{} {}'.format(Command.JOIN, channel))
 
     def send_part(self, channel) -> None:
         """
@@ -262,7 +263,10 @@ class Client:
         self.writer.write('{}\r\n'.format(line).encode('utf-8'))
 
     def send(
-        self, message_or_command: Union[str, Message], *parameters, colon: bool = False
+        self,
+        message_or_command: Union[str, Command, Message],
+        *parameters,
+        colon: bool = False
     ):
         """
         Send an IRC message
@@ -280,7 +284,7 @@ class Client:
                 )
         else:
             message = Message(
-                command=message_or_command, parameters=list(map(str, parameters))
+                command=str(message_or_command), parameters=list(map(str, parameters))
             )
             message.colon = colon
 
@@ -303,15 +307,20 @@ class Client:
 
     def authenticate(self) -> None:
         if not self.is_registered:
-            self.send('CAP', 'LS')
+            self.send(Command.CAP, 'LS')
 
             password = self.get_password()
             if password:
-                self.send('PASS', password)
+                self.send(Command.PASS, password)
 
-            self.send('NICK', self.get_nickname())
+            self.send(Command.NICK, self.get_nickname())
             self.send(
-                'USER', self.get_ident(), '0', '*', self.get_realname(), colon=True
+                Command.USER,
+                self.get_ident(),
+                '0',
+                '*',
+                self.get_realname(),
+                colon=True,
             )
 
     # Channel
@@ -411,7 +420,7 @@ class Client:
                 self.requests.remove(request)
                 request.future.set_result(message)
 
-        self.send('WHO', self.nick)
+        self.send(Command.WHO, self.nick)
         self.irc_registered()
 
     def process_005(self, message: Message) -> None:
@@ -462,7 +471,7 @@ class Client:
     def process_433(self, message: Message) -> None:
         # Nickname is already in use
         if not self.is_registered:
-            self.send('NICK', self.get_alt_nickname())
+            self.send(Command.NICK, self.get_alt_nickname())
 
         if len(message.parameters) > 1:
             nick = message.parameters[1]
@@ -511,7 +520,7 @@ class Client:
                 break
 
     def process_ping(self, message: Message) -> None:
-        self.send('PONG', ' '.join(message.parameters))
+        self.send(Command.PONG, ' '.join(message.parameters))
 
     def process_cap(self, message: Message) -> None:
         command = message.get(1)
@@ -541,7 +550,7 @@ class Client:
                     self.cap_pending.remove(cap)
 
         if not self.cap_pending:
-            self.send('CAP', 'END')
+            self.send(Command.CAP, 'END')
 
     def process_join(self, message: Message) -> None:
         channel_name = message.get(0)
