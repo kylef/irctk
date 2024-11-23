@@ -1,7 +1,7 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class Command(StrEnum):
+class Command(Enum):
     # rfc1459 4.1 Connection Registration
     PASS = "PASS"
     NICK = "NICK"
@@ -77,11 +77,5 @@ class Command(StrEnum):
     # IRCv3 Read Marker (https://github.com/ircv3/ircv3-specifications/blob/3eba5f00deec75bb16bc2d7bdeef0decd6a5a978/extensions/read-marker.md)
     MARKREAD = "MARKREAD"
 
-    @classmethod
-    def _missing_(cls, value):
-        assert isinstance(value, str)
-        assert value.isupper()
-        new_member = str.__new__(cls)
-        new_member._name_ = str(value)
-        new_member._value_ = str(value)
-        return new_member
+    def __str__(self) -> str:
+        return self.value
