@@ -68,9 +68,7 @@ class Client:
 
         self.batches: Dict[str, List[Message]] = {}
 
-    async def connect(
-        self, host: str, port: int, use_tls: bool = False
-    ) -> None:
+    async def connect(self, host: str, port: int, use_tls: bool = False) -> None:
         """
         Connect to the IRC server
         """
