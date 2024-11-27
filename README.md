@@ -53,8 +53,5 @@ if __name__ == '__main__':
     logging.basicConfig(level='DEBUG')
 
     bot = Bot()
-
-    loop = asyncio.get_event_loop()
-    loop.create_task(bot.connect('irc.darkscience.net'))
-    loop.run_forever()
+    asyncio.run(bot.connect('irc.darkscience.net'))
 ```
