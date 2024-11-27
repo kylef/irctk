@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "irc-toolkit"
-version = "0.3.0"
+version = "0.4.0"
 description = "A Python IRCv3 Client Library"
 authors = ["Kyle Fuller <kyle@fuller.li>"]
 license = "BSD"
