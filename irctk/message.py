@@ -212,6 +212,10 @@ class Message:
         return None
 
     @property
+    def msgid(self) -> Optional[str]:
+        return self.find_tag('msgid')
+
+    @property
     def label(self) -> Optional[str]:
         """
         Returns the label this message is in response to.
