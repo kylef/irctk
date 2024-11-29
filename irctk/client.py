@@ -127,7 +127,7 @@ class Client:
     # CAP
 
     def supports_cap(self, cap: str) -> bool:
-        return cap in ['account-tag', 'multi-prefix']
+        return cap in ['account-tag', 'multi-prefix', 'server-time', 'message-tags']
 
     # Support
 
